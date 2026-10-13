@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Akun untuk guru/admin yang berhak mengubah konten website.
+// Tidak ada pendaftaran publik: akun hanya dibuat lewat seed/database.
+model AdminUser {
+  id           String         @id @default(cuid())
+  username     String         @unique
+  passwordHash String
+  name         String
+  role         String         @default("guru") // kepala_sekolah | guru | operator
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     SessionToken[]
+}
+
+// Sesi login (token acak, disimpan di cookie HttpOnly).
+model SessionToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Seluruh konten website (hero, guru, ekskul, galeri, dst.)
+// disimpan sebagai JSON per seksi agar mudah diedit guru lewat panel admin.
+model ContentSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  json      String
+  updatedAt DateTime @updatedAt
+}
