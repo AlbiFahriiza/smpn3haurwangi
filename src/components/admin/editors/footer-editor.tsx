@@ -88,7 +88,7 @@ export function FooterEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Tautan Menu Footer
         </h3>
         {form.tautan.map((t, i) => (

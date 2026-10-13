@@ -1,0 +1,54 @@
+{
+  "title": "Ekstrakurikuler",
+  "description": "Kegiatan ekstrakurikuler wajib dan pilihan yang menyalurkan bakat, minat, dan karakter siswa. Pramuka adalah kegiatan wajib bagi seluruh siswa.",
+  "items": [
+    {
+      "nama": "Pramuka",
+      "jadwal": "Jumat sore",
+      "pembina": "-",
+      "deskripsi": "Kegiatan wajib seluruh siswa. Membentuk kedisiplinan, kemandirian, dan cinta alam melalui kepramukaan (wajib belajar sesuai Permendikbud).",
+      "ikon": "tent",
+      "warna": "#2E7D32"
+    },
+    {
+      "nama": "Paskibra",
+      "jadwal": "Latihan mingguan",
+      "pembina": "-",
+      "deskripsi": "Pasukan pengibar bendera yang bertugas pada upacara Senin dan perayaan hari besar nasional.",
+      "ikon": "flag",
+      "warna": "#C62828"
+    },
+    {
+      "nama": "Bulu Tangkis",
+      "jadwal": "Sabtu",
+      "pembina": "-",
+      "deskripsi": "Latihan bulu tangkis di lapang badminton sekolah, dari teknik dasar hingga siap bertanding antarsekolah.",
+      "ikon": "zap",
+      "warna": "#00695C"
+    },
+    {
+      "nama": "Bola Voli",
+      "jadwal": "Sabtu",
+      "pembina": "-",
+      "deskripsi": "Olahraga tim yang dimainkan di lapang upacara/voli, menumbuhkan kerja sama dan sportivitas.",
+      "ikon": "circle-dot",
+      "warna": "#E65100"
+    },
+    {
+      "nama": "Seni & Tari",
+      "jadwal": "Jumat",
+      "pembina": "-",
+      "deskripsi": "Wadah siswa berbakat seni, tari, musik, dan panggung, yang rutin tampil di pentas seni akhir tahun.",
+      "ikon": "star",
+      "warna": "#6A1B9A"
+    },
+    {
+      "nama": "PMR (Palang Merah Remaja)",
+      "jadwal": "Latihan rutin",
+      "pembina": "-",
+      "deskripsi": "Kepalang merahan remaja: pertolongan pertama, kesehatan, dan kemanusiaan, bekerja sama dengan PMI Cianjur.",
+      "ikon": "cross",
+      "warna": "#B71C1C"
+    }
+  ]
+}

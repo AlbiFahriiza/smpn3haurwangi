@@ -1,0 +1,88 @@
+{
+  "catatan": "Statistik dari data resmi Kemendikdasmen semester 2026/2027. Rincian wali kelas & jumlah per rombel dapat dilengkapi guru melalui panel admin.",
+  "total": 382,
+  "lakiLaki": 199,
+  "perempuan": 183,
+  "rombel": 12,
+  "rasioKelas": 32,
+  "kelas": [
+    {
+      "kelas": "7A",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "7B",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "7C",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "7D",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "8A",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "8B",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "8C",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "8D",
+      "jumlah": 32,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "9A",
+      "jumlah": 31,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "9B",
+      "jumlah": 31,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "9C",
+      "jumlah": 31,
+      "waliKelas": ""
+    },
+    {
+      "kelas": "9D",
+      "jumlah": 31,
+      "waliKelas": ""
+    }
+  ],
+  "fasilitasBelajar": [
+    {
+      "nama": "Ruang Kelas",
+      "jumlah": "14 lokal"
+    },
+    {
+      "nama": "Laboratorium Bahasa",
+      "jumlah": "1 lab"
+    },
+    {
+      "nama": "Laboratorium Komputer",
+      "jumlah": "1 lab"
+    },
+    {
+      "nama": "Perpustakaan",
+      "jumlah": "1 ruang"
+    }
+  ]
+}

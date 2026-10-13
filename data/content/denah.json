@@ -1,0 +1,65 @@
+{
+  "title": "Denah Sekolah",
+  "description": "Denah lokasi (site plan) SMP Negeri 3 Haurwangi di atas lahan seluas 6.138 m². Denah memuat seluruh ruang pembelajaran dan fasilitas penunjang.",
+  "image": "/images/denah-sekolah.jpg",
+  "keterangan": [
+    {
+      "kode": "A",
+      "nama": "Ruang Guru"
+    },
+    {
+      "kode": "B",
+      "nama": "Ruang Kepala Sekolah"
+    },
+    {
+      "kode": "C",
+      "nama": "Ruang Tata Usaha"
+    },
+    {
+      "kode": "D",
+      "nama": "Perpustakaan"
+    },
+    {
+      "kode": "E",
+      "nama": "Laboratorium Bahasa"
+    },
+    {
+      "kode": "F",
+      "nama": "Laboratorium Komputer"
+    },
+    {
+      "kode": "G",
+      "nama": "Ruang Kelas (14 lokal)"
+    },
+    {
+      "kode": "H",
+      "nama": "Ruang UKS / OSIS"
+    },
+    {
+      "kode": "I",
+      "nama": "WC Siswa"
+    },
+    {
+      "kode": "J",
+      "nama": "WC Guru"
+    },
+    {
+      "kode": "K",
+      "nama": "Gudang"
+    }
+  ],
+  "fasilitas": [
+    {
+      "nama": "Lapang Upacara / Voli",
+      "detail": "Tempat upacara bendera setiap Senin dan olahraga voli"
+    },
+    {
+      "nama": "Lapang Badminton",
+      "detail": "Lapangan bulu tangkis di sisi tengah sekolah"
+    },
+    {
+      "nama": "Lahan RKB",
+      "detail": "Lahan kosong disiapkan untuk pembangunan ruang kelas baru"
+    }
+  ]
+}

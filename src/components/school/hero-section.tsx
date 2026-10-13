@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { HomeSection } from "@/lib/content";
-import { BadgeCheck, Landmark, CalendarDays, ChevronDown } from "lucide-react";
+import { BadgeCheck, Landmark, CalendarDays } from "lucide-react";
 
 const BADGE_ICONS: Record<string, typeof BadgeCheck> = {
   badge: BadgeCheck,
@@ -19,86 +19,85 @@ export function HeroSection({
 }) {
   const hero = home?.hero;
   const image = hero?.image || "/images/hero/gerbang-utama.jpg";
+  const badges = hero?.badges ?? [];
+  
 
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative isolate min-h-[420px] md:min-h-[520px] flex items-end overflow-hidden bg-navy"
+      className="relative bg-foam bg-civic-grid border-b border-line/60"
     >
-      <Image
-        src={image}
-        alt="Gerbang utama SMP Negeri 3 Haurwangi dengan bendera merah putih"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover -z-10"
-      />
-      {/* Lapisan gelap dua tingkat agar teks tetap terbaca di foto terang. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-t from-navy/95 via-navy/55 to-navy/25"
-      />
+      <div className="mx-auto max-w-6xl px-4 pt-10 pb-12 md:pt-16 md:pb-20">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          {/* Kolom pernyataan */}
+          <div className="lg:col-span-7 max-w-xl">
+            <h1
+              id="hero-title"
+              className="text-4xl md:text-5xl font-extrabold text-abyss leading-[1.08] tracking-tight"
+            >
+              {hero?.title ?? "SMP Negeri 3 Haurwangi"}
+            </h1>
+            <p className="mt-5 text-base md:text-lg text-ink/90 leading-relaxed max-w-[58ch]">
+              {hero?.subtitle ??
+                "Unggul dalam prestasi, santun dalam perilaku, mencetak generasi cerdas berkarakter di jantung Kabupaten Cianjur."}
+            </p>
 
-      <div className="mx-auto w-full max-w-6xl px-4 pb-12 md:pb-16 pt-24">
-        <div className="max-w-2xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold text-white/90">
-            <BadgeCheck className="w-3.5 h-3.5 text-gold" aria-hidden />
-            Website Resmi · NPSN 20252209
-          </p>
-          <h1
-            id="hero-title"
-            className="mt-4 text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-[1.1] tracking-tight"
-          >
-            {hero?.title ?? "SMP Negeri 3 Haurwangi"}
-          </h1>
-          <p className="mt-4 text-sm md:text-base text-white/85 leading-relaxed max-w-xl">
-            {hero?.subtitle ??
-              "Unggul dalam prestasi, santun dalam perilaku — mencetak generasi cerdas berkarakter di jantung Kabupaten Cianjur."}
-          </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <button
+                onClick={() => onTab("tentang")}
+                className="rounded-lg bg-marine px-5 py-3 text-sm font-bold text-white hover:bg-marine-hover hover:-translate-y-[1px] active:translate-y-[1px] transition-all duration-200 focus-visible:outline-2 focus-visible:outline-marine focus-visible:outline-offset-2"
+              >
+                Tentang Sekolah
+              </button>
+              <button
+                onClick={() => onTab("galeri")}
+                className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-abyss hover:border-marine hover:text-marine transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-marine focus-visible:outline-offset-2"
+              >
+                Lihat Galeri
+              </button>
+            </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {(hero?.badges ?? []).map((b) => {
-              const Icon = BADGE_ICONS[b.icon] ?? BadgeCheck;
-              return (
-                <span
-                  key={b.label}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gold/90 text-navy px-3 py-1.5 text-xs font-bold"
-                >
-                  <Icon className="w-3.5 h-3.5" aria-hidden />
-                  {b.label}
-                </span>
-              );
-            })}
+            {badges.length > 0 && (
+              <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3">
+                {badges.map((b) => {
+                  const Icon = BADGE_ICONS[b.icon] ?? BadgeCheck;
+                  return (
+                    <li
+                      key={b.label}
+                      className="flex items-center gap-2 text-sm font-semibold text-ink/80"
+                    >
+                      <Icon className="w-4 h-4 text-marine" aria-hidden />
+                      {b.label}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              onClick={() => onTab("tentang")}
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors focus-visible:outline-2 focus-visible:outline-white"
-            >
-              Tentang Sekolah
-            </button>
-            <button
-              onClick={() => onTab("galeri")}
-              className="rounded-lg border border-white/40 bg-white/10 backdrop-blur px-5 py-2.5 text-sm font-bold text-white hover:bg-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-white"
-            >
-              Lihat Galeri
-            </button>
+          {/* Kolom foto: momen visual utama */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-lg overflow-hidden ring-1 ring-line shadow-[0_18px_44px_-18px_oklch(0.298_0.076_252.5/0.5)] animate-[fadeScale_0.5s_cubic-bezier(0.16,1,0.3,1)_both]">
+              <Image
+                src={image}
+                alt="Gerbang utama SMP Negeri 3 Haurwangi dengan bendera merah putih"
+                width={880}
+                height={660}
+                priority
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="w-full aspect-[4/3] object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <button
-        onClick={() => {
-          document
-            .getElementById("statistik-sekolah")
-            ?.scrollIntoView({ behavior: "smooth" });
-        }}
-        className="absolute right-4 bottom-4 hidden md:grid place-items-center w-10 h-10 rounded-full border border-white/30 text-white/80 hover:text-white hover:border-white/60 transition-colors"
-        aria-label="Gulir ke statistik sekolah"
-      >
-        <ChevronDown className="w-5 h-5" aria-hidden />
-      </button>
+      <style>{`
+        @keyframes fadeScale {
+          from { opacity: 0; transform: scale(1.03); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </section>
   );
 }

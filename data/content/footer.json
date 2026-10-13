@@ -1,0 +1,32 @@
+{
+  "nama": "SMP Negeri 3 Haurwangi",
+  "tagline": "Unggul dalam prestasi, santun dalam perilaku.",
+  "npsn": "20252209",
+  "alamat": "Jalan Buniayu, Desa Kertamukti, Kec. Haurwangi, Kab. Cianjur, Jawa Barat 43282",
+  "email": "smpn3_haurwangi@yahoo.com",
+  "akreditasi": "Akreditasi B, SK BAN-SM No. 02.00/273/BAP-SM/SK/X/2016",
+  "berdiri": "Berdiri 26 April 2006, SK 421.3/Kep.71-Ks/2006",
+  "tautan": [
+    {
+      "label": "Beranda",
+      "tab": "beranda"
+    },
+    {
+      "label": "Tentang Sekolah",
+      "tab": "tentang"
+    },
+    {
+      "label": "Ekstrakurikuler",
+      "tab": "ekskul"
+    },
+    {
+      "label": "Galeri",
+      "tab": "galeri"
+    },
+    {
+      "label": "Kontak",
+      "tab": "kontak"
+    }
+  ],
+  "credit": "Website resmi SMP Negeri 3 Haurwangi · Dikelola Tim Media Sekolah"
+}

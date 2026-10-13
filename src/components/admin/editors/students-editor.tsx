@@ -74,7 +74,7 @@ export function StudentsEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Rombongan Belajar
         </h3>
         {form.kelas.map((k, i) => (
@@ -135,7 +135,7 @@ export function StudentsEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Fasilitas Belajar
         </h3>
         {form.fasilitasBelajar.map((fa, i) => (

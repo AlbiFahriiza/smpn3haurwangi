@@ -1,0 +1,74 @@
+{
+  "hero": {
+    "title": "SMP Negeri 3 Haurwangi",
+    "subtitle": "Unggul dalam prestasi, santun dalam perilaku, mencetak generasi cerdas berkarakter di jantung Kabupaten Cianjur.",
+    "image": "/images/hero/gerbang-utama.jpg",
+    "badges": [
+      {
+        "label": "Akreditasi B",
+        "icon": "badge"
+      },
+      {
+        "label": "Sekolah Negeri",
+        "icon": "building"
+      },
+      {
+        "label": "Berdiri 2006",
+        "icon": "calendar"
+      }
+    ]
+  },
+  "stats": [
+    {
+      "label": "Siswa Aktif",
+      "value": "382",
+      "sub": "199 putra · 183 putri"
+    },
+    {
+      "label": "Guru & Tenaga Pendidik",
+      "value": "16",
+      "sub": "93,75% bersertifikasi"
+    },
+    {
+      "label": "Rombongan Belajar",
+      "value": "12",
+      "sub": "Kelas 7-9"
+    },
+    {
+      "label": "Luas Lahan",
+      "value": "6.138 m²",
+      "sub": "Lapang upacara & badminton"
+    }
+  ],
+  "sambutan": {
+    "title": "Sambutan Kepala Sekolah",
+    "nama": "Agus Solihin",
+    "jabatan": "Kepala SMP Negeri 3 Haurwangi",
+    "foto": "",
+    "teks": [
+      "Assalamualaikum warahmatullahi wabarakatuh. Puji syukur kita panjatkan ke hadirat Tuhan Yang Maha Esa atas rahmat dan karunia-Nya sehingga website resmi SMP Negeri 3 Haurwangi dapat hadir sebagai jembatan informasi antara sekolah, orang tua, dan masyarakat.",
+      "Sebagai lembaga pendidikan yang berdiri sejak 26 April 2006, SMP Negeri 3 Haurwangi terus berbenah mengikuti perkembangan zaman. Dengan dukungan sumber daya manusia yang dimiliki, sekolah ini siap berkompetisi dalam pelayanan informasi publik yang cepat, jelas, dan akuntabel.",
+      "Teknologi informasi, khususnya website ini, menjadi sarana untuk memberikan pelayanan informasi sekaligus wadah menerima saran dari semua pihak demi menjawab kebutuhan masyarakat. Mari bersama kita wujudkan generasi yang berakhlak mulia, cerdas, dan siap bersaing di masa depan."
+    ]
+  },
+  "berita": [
+    {
+      "title": "Pentas Seni & Pelepasan Kelas 9",
+      "date": "Juni 2025",
+      "excerpt": "Siswa tampilkan tari, musik, dan drama dalam pentas seni akhir tahun sekaligus pelepasan kelas 9.",
+      "image": "/images/galeri/pentas-seni-1.jpg"
+    },
+    {
+      "title": "Asesmen Berbasis Komputer (ANBK)",
+      "date": "Agustus 2025",
+      "excerpt": "Pelaksanaan ANBK berjalan lancar di laboratorium komputer sekolah.",
+      "image": "/images/galeri/anbk.jpg"
+    },
+    {
+      "title": "Pagi Ceria Serentak 2025",
+      "date": "2025",
+      "excerpt": "Seluruh siswa dan guru mengikuti senam pagi ceria serentak di lapangan upacara.",
+      "image": "/images/galeri/apel-sekolah.jpg"
+    }
+  ]
+}

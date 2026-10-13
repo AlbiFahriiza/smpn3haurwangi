@@ -46,18 +46,15 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
   const current = lightbox !== null ? filtered[lightbox] : null;
 
   return (
-    <section aria-labelledby="galeri-title" className="py-14 md:py-20">
+    <section aria-labelledby="galeri-title" className="bg-foam py-14 md:py-20">
       <div className="mx-auto max-w-6xl px-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-primary">
-          Dokumentasi
-        </p>
         <h1
           id="galeri-title"
-          className="mt-2 text-2xl md:text-4xl font-extrabold text-navy"
+          className="text-3xl md:text-4xl font-extrabold text-abyss tracking-tight"
         >
           {gallery?.title ?? "Galeri"}
         </h1>
-        <p className="mt-3 text-sm md:text-[15px] text-foreground/75 leading-relaxed max-w-2xl">
+        <p className="mt-3 text-sm md:text-[15px] text-slate-ink leading-relaxed max-w-2xl">
           {gallery?.description}
         </p>
 
@@ -75,10 +72,10 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
                 setLightbox(null);
               }}
               aria-pressed={kategori === k}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-marine ${
                 kategori === k
-                  ? "bg-navy text-white"
-                  : "bg-white border border-border text-foreground/70 hover:border-primary/40"
+                  ? "bg-marine text-white"
+                  : "bg-white border border-line text-ink/70 hover:border-marine/50 hover:text-marine"
               }`}
             >
               {k}
@@ -92,7 +89,7 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
               <li key={item.src} className="mb-4 break-inside-avoid">
                 <button
                   onClick={() => setLightbox(i)}
-                  className="group relative block w-full rounded-lg overflow-hidden border border-border bg-white focus-visible:outline-2 focus-visible:outline-primary"
+                  className="group relative block w-full rounded-lg overflow-hidden border border-line bg-white focus-visible:outline-2 focus-visible:outline-marine"
                   aria-label={`Perbesar foto: ${item.judul}`}
                 >
                   <span
@@ -106,13 +103,13 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
                       className="object-cover group-hover:scale-[1.04] transition-transform duration-300"
                     />
                   </span>
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/85 to-transparent p-3 pt-8 text-left">
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-abyss/90 to-transparent p-3 pt-8 text-left">
                     <span className="block text-xs md:text-[13px] font-semibold text-white leading-snug line-clamp-2">
                       {item.judul}
                     </span>
                     <span className="block text-[10px] text-white/70 mt-0.5">
                       {item.kategori}
-                      {item.tanggal && item.tanggal !== "—" && ` · ${item.tanggal}`}
+                      {item.tanggal && item.tanggal !== "-" && `, ${item.tanggal}`}
                     </span>
                   </span>
                 </button>
@@ -120,7 +117,7 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
             ))}
           </ul>
         ) : (
-          <div className="mt-10 rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          <div className="mt-10 rounded-lg border border-dashed border-line p-12 text-center text-slate-ink">
             <ImageOff className="mx-auto w-8 h-8 mb-3" aria-hidden />
             <p className="text-sm">
               Belum ada foto pada kategori ini. Guru dapat menambahkannya lewat panel admin.
@@ -135,7 +132,7 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
         onOpenChange={(open) => !open && setLightbox(null)}
       >
         <DialogContent
-          className="max-w-4xl p-0 overflow-hidden bg-navy border-white/10 [&>button]:text-white [&>button]:bg-white/10 [&>button]:hover:bg-white/20"
+          className="max-w-4xl p-0 overflow-hidden bg-abyss border-white/10 [&>button]:text-white [&>button]:bg-white/10 [&>button]:hover:bg-white/20"
           aria-describedby={undefined}
         >
           {current && (
@@ -156,23 +153,23 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
                   </DialogTitle>
                   <p className="text-xs text-white/60 mt-0.5">
                     {current.kategori}
-                    {current.tanggal && current.tanggal !== "—" && ` · ${current.tanggal}`}
+                    {current.tanggal && current.tanggal !== "-" && `, ${current.tanggal}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => step(-1)}
-                    className="grid place-items-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/25"
+                    className="grid place-items-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors focus-visible:outline-2 focus-visible:outline-white"
                     aria-label="Foto sebelumnya"
                   >
                     <ChevronLeft className="w-5 h-5" aria-hidden />
                   </button>
-                  <span className="text-xs text-white/60 tabular-nums">
+                  <span className="text-xs text-white/60 tabular">
                     {(lightbox ?? 0) + 1}/{filtered.length}
                   </span>
                   <button
                     onClick={() => step(1)}
-                    className="grid place-items-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/25"
+                    className="grid place-items-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/25 transition-colors focus-visible:outline-2 focus-visible:outline-white"
                     aria-label="Foto berikutnya"
                   >
                     <ChevronRight className="w-5 h-5" aria-hidden />

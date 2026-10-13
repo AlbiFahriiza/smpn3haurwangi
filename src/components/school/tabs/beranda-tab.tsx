@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { SiteContent } from "@/lib/content";
 import { HeroSection } from "../hero-section";
 import { StatsBand } from "../stats-band";

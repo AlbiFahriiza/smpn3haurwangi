@@ -76,7 +76,7 @@ export function ContactEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Media Sosial
         </h3>
         {form.sosial.map((s, i) => (

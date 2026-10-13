@@ -1,0 +1,20 @@
+{
+  "alamat": "Jalan Buniayu, Desa Kertamukti, Kec. Haurwangi, Kab. Cianjur, Jawa Barat 43282",
+  "email": "smpn3_haurwangi@yahoo.com",
+  "telepon": "",
+  "jamLayanan": "Senin-Jumat, 07.00-15.30 WIB",
+  "mapsEmbed": "https://www.google.com/maps?q=-6.8005,107.3064&z=16&output=embed",
+  "mapsLink": "https://www.google.com/maps?q=-6.8005,107.3064",
+  "sosial": [
+    {
+      "nama": "YouTube",
+      "url": "https://www.youtube.com/@Smpn3haurwangiofficial",
+      "ikon": "youtube"
+    },
+    {
+      "nama": "Email",
+      "url": "mailto:smpn3_haurwangi@yahoo.com",
+      "ikon": "mail"
+    }
+  ]
+}

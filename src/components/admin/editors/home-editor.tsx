@@ -37,7 +37,7 @@ export function HomeEditor({
     >
       {/* Hero */}
       <section className="rounded-lg border border-border bg-white p-5 space-y-4">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">Hero Beranda</h3>
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">Hero Beranda</h3>
         <TextField
           label="Judul Utama"
           value={form.hero.title}
@@ -52,7 +52,7 @@ export function HomeEditor({
           label="Foto Header"
           value={form.hero.image}
           onChange={(v) => setForm((f) => ({ ...f, hero: { ...f.hero, image: v } }))}
-          hint="Foto gerbang/gedung sekolah — unggah atau tempel path gambar."
+          hint="Foto gerbang/gedung sekolah, unggah atau tempel path gambar."
         />
         <div className="space-y-2">
           <p className="text-sm font-medium">Lencana (badge)</p>
@@ -122,7 +122,7 @@ export function HomeEditor({
 
       {/* Statistik */}
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Pita Statistik
         </h3>
         {form.stats.map((s, i) => (
@@ -177,7 +177,7 @@ export function HomeEditor({
 
       {/* Sambutan */}
       <section className="rounded-lg border border-border bg-white p-5 space-y-4">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Sambutan Kepala Sekolah
         </h3>
         <TextField
@@ -256,7 +256,7 @@ export function HomeEditor({
 
       {/* Berita */}
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">Berita</h3>
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">Berita</h3>
         {form.berita.map((b, i) => (
           <div key={i} className="rounded-md border border-border p-3 space-y-3">
             <ItemHeader

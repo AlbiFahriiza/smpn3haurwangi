@@ -52,3 +52,9 @@ prompt
 server.log
 # Skills directory
 /skills/
+# secrets & runtime data (JANGAN commit)
+secrets/
+data/admin.json
+data/sessions.json
+public/uploads/
+upload/

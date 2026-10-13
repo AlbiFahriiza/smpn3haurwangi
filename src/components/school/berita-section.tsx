@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { BeritaItem } from "@/lib/content";
-import { ArrowRight, Newspaper } from "lucide-react";
+import { Newspaper } from "lucide-react";
 
 export function BeritaSection({
   berita,
@@ -14,61 +14,86 @@ export function BeritaSection({
   const items = berita ?? [];
   if (items.length === 0) return null;
 
+  const [utama, ...lainnya] = items;
+
   return (
     <section
       aria-labelledby="berita-title"
-      className="py-14 md:py-20 bg-secondary/50 border-t border-border"
+      className="bg-foam py-14 md:py-20 border-t border-line/60"
     >
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              Kabar Terbaru
-            </p>
-            <h2
-              id="berita-title"
-              className="mt-2 text-2xl md:text-3xl font-extrabold text-navy"
-            >
-              Berita Sekolah
-            </h2>
-          </div>
+          <h2
+            id="berita-title"
+            className="text-2xl md:text-3xl font-extrabold text-abyss tracking-tight"
+          >
+            Berita Sekolah
+          </h2>
           <button
             onClick={() => onTab("galeri")}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            className="text-sm font-semibold text-marine hover:underline focus-visible:outline-2 focus-visible:outline-marine rounded-sm"
           >
             Lihat galeri
-            <ArrowRight className="w-4 h-4" aria-hidden />
           </button>
         </div>
 
-        <ul className="mt-8 grid gap-5 md:grid-cols-3">
-          {items.map((b) => (
-            <li key={b.title}>
-              <article className="group h-full rounded-xl overflow-hidden bg-white border border-border hover:border-primary/40 transition-colors flex flex-col">
-                {b.image && (
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <Image
-                      src={b.image}
-                      alt={b.title}
-                      fill
-                      sizes="(min-width: 768px) 33vw, 100vw"
-                      className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <div className="p-4 md:p-5 flex flex-col gap-2 flex-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-                    {b.date}
-                  </p>
-                  <h3 className="font-bold text-navy leading-snug">{b.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                    {b.excerpt}
-                  </p>
+        <div className="mt-8 grid gap-8 lg:grid-cols-[3fr_2fr]">
+          {/* Berita utama: satu foto besar, bukan deretan kartu seragam */}
+          {utama && (
+            <article className="group rounded-lg overflow-hidden bg-white border border-line">
+              {utama.image && (
+                <div className="relative aspect-[16/9] overflow-hidden">
+                  <Image
+                    src={utama.image}
+                    alt={utama.title}
+                    fill
+                    sizes="(min-width: 1024px) 640px, 100vw"
+                    className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                  />
                 </div>
-              </article>
-            </li>
-          ))}
-        </ul>
+              )}
+              <div className="p-5 md:p-6">
+                <p className="text-xs font-semibold text-slate-ink">{utama.date}</p>
+                <h3 className="mt-2 text-lg md:text-xl font-bold text-abyss leading-snug">
+                  {utama.title}
+                </h3>
+                <p className="mt-2 text-sm text-ink/75 leading-relaxed line-clamp-3">
+                  {utama.excerpt}
+                </p>
+              </div>
+            </article>
+          )}
+
+          {/* Berita lainnya: baris ringkas dengan pemisah garis */}
+          {lainnya.length > 0 && (
+            <ul className="bg-white rounded-lg border border-line divide-y divide-line">
+              {lainnya.map((b) => (
+                <li key={b.title} className="flex gap-4 p-4">
+                  {b.image && (
+                    <div className="relative w-24 h-20 sm:w-28 shrink-0 rounded-md overflow-hidden">
+                      <Image
+                        src={b.image}
+                        alt={b.title}
+                        fill
+                        sizes="112px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-slate-ink">{b.date}</p>
+                    <h3 className="mt-0.5 text-sm font-bold text-abyss leading-snug line-clamp-2">
+                      {b.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-ink/70 leading-relaxed line-clamp-2">
+                      {b.excerpt}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -76,9 +101,11 @@ export function BeritaSection({
 
 export function BeritaEmpty() {
   return (
-    <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
+    <div className="rounded-lg border border-dashed border-line p-10 text-center text-slate-ink">
       <Newspaper className="mx-auto w-8 h-8 mb-3" aria-hidden />
-      <p className="text-sm">Belum ada berita. Guru dapat menambahkannya lewat panel admin.</p>
+      <p className="text-sm">
+        Belum ada berita. Guru dapat menambahkannya lewat panel admin.
+      </p>
     </div>
   );
 }

@@ -141,27 +141,27 @@ export function AdminPanel({
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">
-          Panel Admin — mengelola konten website sekolah
+          Panel Admin, mengelola konten website sekolah
         </DialogTitle>
         {cekSesi ? (
           <div className="h-full grid place-items-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" aria-label="Memuat" />
+            <Loader2 className="w-8 h-8 animate-spin text-marine" aria-label="Memuat" />
           </div>
         ) : !user ? (
           /* ---------- FORMULIR LOGIN ---------- */
-          <div className="h-full grid place-items-center bg-secondary/40 p-6">
+          <div className="h-full grid place-items-center bg-sky/40 p-6">
             <form
               onSubmit={login}
-              className="w-full max-w-sm rounded-xl bg-white border border-border p-6 space-y-5 shadow-sm"
+              className="w-full max-w-sm rounded-lg bg-white border border-line p-6 space-y-5 shadow-[0_18px_40px_-24px_oklch(0.298_0.076_252.5/0.35)]"
             >
               <div className="text-center">
-                <span className="mx-auto grid place-items-center w-12 h-12 rounded-full bg-navy text-gold">
+                <span className="mx-auto grid place-items-center w-12 h-12 rounded-lg bg-abyss text-white">
                   <Lock className="w-5 h-5" aria-hidden />
                 </span>
-                <h2 className="mt-3 text-lg font-extrabold text-navy">
+                <h2 className="mt-3 text-lg font-extrabold text-abyss">
                   Panel Admin Sekolah
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-slate-ink">
                   Hanya guru dan tenaga kependidikan yang berwenang mengubah konten.
                 </p>
               </div>
@@ -193,7 +193,7 @@ export function AdminPanel({
                   {galatLogin}
                 </p>
               )}
-              <Button type="submit" className="w-full" disabled={sedangLogin}>
+              <Button type="submit" className="w-full bg-marine hover:bg-marine-hover text-white font-semibold" disabled={sedangLogin}>
                 {sedangLogin && <Loader2 className="w-4 h-4 animate-spin" aria-hidden />}
                 Masuk
               </Button>
@@ -203,9 +203,9 @@ export function AdminPanel({
           /* ---------- DASBOR ADMIN ---------- */
           <div className="h-full flex flex-col md:flex-row overflow-hidden">
             {/* Sidebar */}
-            <aside className="md:w-64 shrink-0 bg-navy text-white flex flex-col max-h-[30vh] md:max-h-none">
+            <aside className="md:w-64 shrink-0 bg-abyss text-white flex flex-col max-h-[30vh] md:max-h-none">
               <div className="p-4 border-b border-white/10 flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-gold shrink-0" aria-hidden />
+                <ShieldCheck className="w-5 h-5 text-sky shrink-0" aria-hidden />
                 <div className="min-w-0">
                   <p className="text-sm font-bold truncate">Panel Admin</p>
                   <p className="text-[11px] text-white/60 truncate">
@@ -230,7 +230,7 @@ export function AdminPanel({
                             aria-current={seksi === s.key ? "true" : undefined}
                             className={`w-full text-left px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
                               seksi === s.key
-                                ? "bg-primary text-white"
+                                ? "bg-marine text-white"
                                 : "text-white/70 hover:bg-white/10 hover:text-white"
                             }`}
                           >
@@ -265,12 +265,12 @@ export function AdminPanel({
             </aside>
 
             {/* Area editor seksi */}
-            <div className="flex-1 overflow-y-auto bg-secondary/40">
-              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-5 py-3.5 flex items-center justify-between">
-                <h2 className="font-bold text-navy">
+            <div className="flex-1 overflow-y-auto bg-sky/30">
+              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-line px-5 py-3.5 flex items-center justify-between">
+                <h2 className="font-bold text-abyss">
                   {seksiAktif?.label ?? "Editor"}
                 </h2>
-                <p className="text-[11px] text-muted-foreground hidden sm:block">
+                <p className="text-[11px] text-slate-ink hidden sm:block">
                   Perubahan tersimpan saat Anda menekan tombol Simpan.
                 </p>
               </div>

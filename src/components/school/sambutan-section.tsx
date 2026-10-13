@@ -19,34 +19,30 @@ export function SambutanSection({
   if (teks.length === 0) return null;
 
   return (
-    <section aria-labelledby="sambutan-title" className="py-14 md:py-20">
+    <section aria-labelledby="sambutan-title" className="bg-white py-14 md:py-20">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="grid gap-8 md:grid-cols-[auto_1fr] md:gap-12">
-          <div className="md:sticky md:top-28 self-start">
-            <Quote
-              className="w-10 h-10 text-gold"
-              aria-hidden
-              strokeWidth={1.5}
-            />
+        <div className="grid gap-10 md:grid-cols-[280px_1fr] md:gap-14">
+          <div className="md:sticky md:top-32 self-start">
+            <Quote className="w-9 h-9 text-marine" aria-hidden strokeWidth={1.5} />
             <h2
               id="sambutan-title"
-              className="mt-3 text-xl md:text-2xl font-extrabold text-navy"
+              className="mt-3 text-xl md:text-2xl font-extrabold text-abyss tracking-tight"
             >
               {sambutan?.title ?? "Sambutan Kepala Sekolah"}
             </h2>
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-3">
               {sambutan?.foto ? (
                 <Image
                   src={sambutan.foto}
                   alt={`Foto ${nama}`}
                   width={56}
                   height={56}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-gold"
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-sky"
                 />
               ) : (
                 <span
                   aria-hidden
-                  className="grid place-items-center w-14 h-14 rounded-full bg-secondary text-navy font-extrabold text-lg border-2 border-gold"
+                  className="grid place-items-center w-14 h-14 rounded-full bg-sky text-abyss font-extrabold text-lg ring-2 ring-white"
                 >
                   {nama
                     .split(" ")
@@ -56,18 +52,24 @@ export function SambutanSection({
                 </span>
               )}
               <div>
-                <p className="font-bold text-navy text-sm">{nama}</p>
-                <p className="text-xs text-muted-foreground">{jabatan}</p>
+                <p className="font-bold text-abyss text-sm">{nama}</p>
+                <p className="text-xs text-slate-ink">{jabatan}</p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 text-sm md:text-[15px] leading-relaxed text-foreground/85 max-w-3xl">
-            {teks.map((paragraf, i) => (
-              <p key={i} className={i === 0 ? "first-letter:text-gold first-letter:text-4xl first-letter:font-extrabold first-letter:float-left first-letter:mr-2 first-letter:leading-[0.9]" : ""}>
-                {paragraf}
-              </p>
-            ))}
+          <div className="space-y-5 text-sm md:text-[15px] leading-[1.85] text-ink/90 max-w-3xl">
+            {teks.map((paragraf, i) =>
+              i === 0 ? (
+                <p key={i}>
+                  <span className="font-serif italic text-lg md:text-xl text-abyss">
+                    {paragraf}
+                  </span>
+                </p>
+              ) : (
+                <p key={i}>{paragraf}</p>
+              )
+            )}
           </div>
         </div>
       </div>

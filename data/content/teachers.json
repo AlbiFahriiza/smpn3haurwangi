@@ -1,0 +1,65 @@
+{
+  "catatan": "Data guru berikut dari galeri resmi sekolah (5 dari 16 guru & tenaga kependidikan). Lengkapi daftar guru lainnya beserta mapel melalui panel admin.",
+  "items": [
+    {
+      "nama": "Agus Solihin, S.Pd.",
+      "jabatan": "Kepala Sekolah",
+      "mapel": "Manajemen Sekolah",
+      "foto": "",
+      "deskripsi": "Memimpin SMP Negeri 3 Haurwangi dengan fokus pada peningkatan mutu pembelajaran, penguatan karakter, dan pelayanan publik yang akuntabel."
+    },
+    {
+      "nama": "Aldiansyah, S.Pd.",
+      "jabatan": "Guru",
+      "mapel": "-",
+      "foto": "/images/guru/aldiansyah.jpg",
+      "deskripsi": "Guru mata pelajaran di SMP Negeri 3 Haurwangi."
+    },
+    {
+      "nama": "Desty Rosanti, S.Pd.",
+      "jabatan": "Guru",
+      "mapel": "-",
+      "foto": "/images/guru/desty-rosanti.jpg",
+      "deskripsi": "Guru mata pelajaran di SMP Negeri 3 Haurwangi."
+    },
+    {
+      "nama": "Masyhudah Fitri Tsania, S.Pd.",
+      "jabatan": "Guru",
+      "mapel": "-",
+      "foto": "/images/guru/masyhudah-fitri-tsania.jpg",
+      "deskripsi": "Guru mata pelajaran di SMP Negeri 3 Haurwangi."
+    },
+    {
+      "nama": "Nur Dewi, S.Pd.",
+      "jabatan": "Guru",
+      "mapel": "-",
+      "foto": "/images/guru/nurdewi.jpg",
+      "deskripsi": "Guru mata pelajaran di SMP Negeri 3 Haurwangi."
+    },
+    {
+      "nama": "Risha Agustiansyah",
+      "jabatan": "Operator Sekolah",
+      "mapel": "Dapodik & Sekolah Kita",
+      "foto": "",
+      "deskripsi": "Pengelola data pokok pendidikan dan operator website sekolah."
+    }
+  ],
+  "statistik": [
+    {
+      "label": "Guru & Tendik",
+      "value": "16"
+    },
+    {
+      "label": "Guru Bersertifikasi",
+      "value": "93,75%"
+    },
+    {
+      "label": "Guru PNS",
+      "value": "93,75%"
+    },
+    {
+      "label": "Rasio Siswa/Guru",
+      "value": "24"
+    }
+  ]
+}

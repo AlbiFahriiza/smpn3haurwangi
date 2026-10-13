@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { getStore } from "@/lib/store";
 import { getSession } from "@/lib/auth";
 import { getSiteContent, SECTION_KEYS, type SectionKey } from "@/lib/content";
+import { CONTENT_PAYLOAD_LIMIT } from "@/lib/store/types";
 
 /** GET /api/content — konten publik seluruh seksi. */
 export async function GET() {
@@ -42,21 +43,18 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const json = JSON.stringify(body.json, null, 2);
+  const json = JSON.stringify(body.json);
 
   // Batas ukuran wajar untuk satu seksi konten (foto disimpan sebagai path/URL).
-  if (json.length > 512_000) {
+  if (json.length > CONTENT_PAYLOAD_LIMIT) {
     return NextResponse.json(
-      { error: "Konten terlalu besar (maksimum sekitar 500 KB)." },
+      { error: "Konten terlalu besar (maksimum 256 KB per seksi)." },
       { status: 413 }
     );
   }
 
-  await db.contentSection.upsert({
-    where: { key },
-    update: { json },
-    create: { key, json },
-  });
+  const store = await getStore();
+  await store.updateContentSection(key, body.json);
 
-  return NextResponse.json({ ok: true, key });
+  return NextResponse.json({ ok: true, key, backend: store.kind });
 }

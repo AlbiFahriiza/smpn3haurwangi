@@ -50,7 +50,7 @@ export function PasswordEditor() {
       onSubmit={submit}
       className="max-w-sm space-y-4 rounded-lg border border-border bg-white p-5"
     >
-      <div className="flex items-center gap-2 text-navy">
+      <div className="flex items-center gap-2 text-abyss">
         <KeyRound className="w-5 h-5" aria-hidden />
         <h3 className="font-bold">Ganti Kata Sandi</h3>
       </div>

@@ -1,0 +1,42 @@
+{
+  "title": "Rutinitas Sekolah",
+  "description": "Kegiatan rutin mingguan dan tahunan yang membentuk kedisiplinan dan karakter siswa.",
+  "items": [
+    {
+      "nama": "Upacara Bendera",
+      "waktu": "Setiap Senin, 07.00 WIB",
+      "deskripsi": "Seluruh siswa dan guru mengikuti upacara bendera di lapangan upacara untuk menumbuhkan nasionalisme dan kedisiplinan.",
+      "ikon": "flag"
+    },
+    {
+      "nama": "Apel Pagi & Literasi",
+      "waktu": "Setiap hari, 06.45 WIB",
+      "deskripsi": "Apel pagi sebelum masuk kelas dilanjutkan pembiasaan membaca Al-Qur’an dan literasi.",
+      "ikon": "sunrise"
+    },
+    {
+      "nama": "Kegiatan Belajar Mengajar",
+      "waktu": "Senin-Jumat, 07.00-15.30 WIB",
+      "deskripsi": "Pembelajaran sehari penuh 5 hari dengan Kurikulum Merdeka, termasuk pembelajaran berbasis komputer dan praktik laboratorium.",
+      "ikon": "book"
+    },
+    {
+      "nama": "Pengajian & Pembinaan Karakter",
+      "waktu": "Jumat",
+      "deskripsi": "Pengajian rutin bersama seluruh siswa untuk penumbuhan budi pekerti dan pendalaman keagamaan.",
+      "ikon": "heart"
+    },
+    {
+      "nama": "Ekstrakurikuler",
+      "waktu": "Jumat & Sabtu",
+      "deskripsi": "Latihan ekstrakurikuler mingguan, pramuka, olahraga, dan kesenian (lihat tab Ekstrakurikuler).",
+      "ikon": "users"
+    },
+    {
+      "nama": "Pentas Seni & Pelepasan",
+      "waktu": "Akhir tahun ajaran",
+      "deskripsi": "Puncak kegiatan seni tahunan yang menampilkan karya siswa sekaligus perpisahan kelas 9.",
+      "ikon": "star"
+    }
+  ]
+}

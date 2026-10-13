@@ -48,13 +48,13 @@ export function DenahEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Keterangan Ruang
         </h3>
         {form.keterangan.map((k, i) => (
           <div key={i} className="rounded-md border border-border p-3">
             <ItemHeader
-              judul={`${k.kode} — ${k.nama}`}
+              judul={`${k.kode}: ${k.nama}`}
               onHapus={() =>
                 setForm((f) => ({
                   ...f,
@@ -95,7 +95,7 @@ export function DenahEditor({
       </section>
 
       <section className="rounded-lg border border-border bg-white p-5 space-y-3">
-        <h3 className="font-bold text-navy text-sm uppercase tracking-wide">
+        <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">
           Area Terbuka / Fasilitas
         </h3>
         {form.fasilitas.map((f2, i) => (

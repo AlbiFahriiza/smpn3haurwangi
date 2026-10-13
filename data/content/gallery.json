@@ -1,0 +1,170 @@
+{
+  "title": "Galeri",
+  "description": "Dokumentasi kegiatan SMP Negeri 3 Haurwangi, dari kegiatan belajar hingga pentas seni.",
+  "kategori": [
+    "Semua",
+    "Kegiatan Belajar",
+    "Upacara & Apel",
+    "Seni & Perpisahan",
+    "Keagamaan",
+    "Lainnya"
+  ],
+  "items": [
+    {
+      "src": "/images/galeri/kegiatan-belajar-1.jpg",
+      "judul": "Kegiatan Belajar Mengajar",
+      "kategori": "Kegiatan Belajar",
+      "tanggal": "April 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-belajar-2.jpg",
+      "judul": "KBM di Kelas",
+      "kategori": "Kegiatan Belajar",
+      "tanggal": "April 2025"
+    },
+    {
+      "src": "/images/galeri/upacara-apel-pagi.jpg",
+      "judul": "Upacara & Apel Pagi",
+      "kategori": "Upacara & Apel",
+      "tanggal": "-"
+    },
+    {
+      "src": "/images/galeri/apel-sekolah.jpg",
+      "judul": "Apel di Halaman Sekolah",
+      "kategori": "Upacara & Apel",
+      "tanggal": "Juli 2025"
+    },
+    {
+      "src": "/images/galeri/pembinaan-siswa.jpg",
+      "judul": "Pembinaan Siswa",
+      "kategori": "Kegiatan Belajar",
+      "tanggal": "Juli 2025"
+    },
+    {
+      "src": "/images/galeri/pentas-seni-1.jpg",
+      "judul": "Pentas Seni & Pelepasan",
+      "kategori": "Seni & Perpisahan",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/pentas-seni-2.jpg",
+      "judul": "Panggung Pentas Seni",
+      "kategori": "Seni & Perpisahan",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/pentas-seni-3.jpg",
+      "judul": "Perpisahan Kelas 9",
+      "kategori": "Seni & Perpisahan",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/pentas-seni-4.jpg",
+      "judul": "Suasana Pentas Seni",
+      "kategori": "Seni & Perpisahan",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/pentas-seni-5.jpg",
+      "judul": "Guru & Panitia Pentas Seni",
+      "kategori": "Seni & Perpisahan",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/pengajian.jpg",
+      "judul": "Pengajian Bersama",
+      "kategori": "Keagamaan",
+      "tanggal": "September 2025"
+    },
+    {
+      "src": "/images/galeri/pawai-siswa.jpg",
+      "judul": "Pawai Siswa",
+      "kategori": "Lainnya",
+      "tanggal": "Agustus 2025"
+    },
+    {
+      "src": "/images/galeri/anbk.jpg",
+      "judul": "Asesmen Berbasis Komputer (ANBK)",
+      "kategori": "Kegiatan Belajar",
+      "tanggal": "Agustus 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-luar-1.jpg",
+      "judul": "Kegiatan di Luar Sekolah",
+      "kategori": "Lainnya",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-luar-2.jpg",
+      "judul": "Foto Bersama",
+      "kategori": "Lainnya",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-luar-3.jpg",
+      "judul": "Rekreasi & Studi Wisata",
+      "kategori": "Lainnya",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-luar-4.jpg",
+      "judul": "Silaturahmi Guru",
+      "kategori": "Lainnya",
+      "tanggal": "Juni 2025"
+    },
+    {
+      "src": "/images/galeri/foto-bersama-guru-1.jpg",
+      "judul": "Guru & Staf SMPN 3 Haurwangi",
+      "kategori": "Lainnya",
+      "tanggal": "Maret 2025"
+    },
+    {
+      "src": "/images/galeri/foto-bersama-guru-2.jpg",
+      "judul": "Keluarga Besar Sekolah",
+      "kategori": "Lainnya",
+      "tanggal": "Maret 2025"
+    },
+    {
+      "src": "/images/galeri/foto-bersama-guru-3.jpg",
+      "judul": "Guru & Tenaga Kependidikan",
+      "kategori": "Lainnya",
+      "tanggal": "Maret 2025"
+    },
+    {
+      "src": "/images/galeri/silaturahmi-guru.jpg",
+      "judul": "Silaturahmi Awal Tahun",
+      "kategori": "Lainnya",
+      "tanggal": "September 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-siswa-1.jpg",
+      "judul": "Kegiatan Siswa",
+      "kategori": "Lainnya",
+      "tanggal": "September 2025"
+    },
+    {
+      "src": "/images/galeri/kegiatan-siswa-2.jpg",
+      "judul": "Bersama Guru Pembina",
+      "kategori": "Lainnya",
+      "tanggal": "September 2025"
+    },
+    {
+      "src": "/images/galeri/dokumentasi-studio.jpg",
+      "judul": "Dokumentasi Resmi",
+      "kategori": "Lainnya",
+      "tanggal": "-"
+    },
+    {
+      "src": "/images/galeri/wisuda-guru.jpg",
+      "judul": "Wisuda & Pelatihan Guru",
+      "kategori": "Lainnya",
+      "tanggal": "-"
+    },
+    {
+      "src": "/images/galeri/dokumentasi-resmi.jpg",
+      "judul": "Tim Sekolah",
+      "kategori": "Lainnya",
+      "tanggal": "-"
+    }
+  ]
+}

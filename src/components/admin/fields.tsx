@@ -166,7 +166,7 @@ export function ItemHeader({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 mb-3">
-      <p className="text-sm font-bold text-navy truncate">{judul}</p>
+      <p className="text-sm font-bold text-abyss truncate">{judul}</p>
       <div className="flex items-center gap-1 shrink-0">
         {onNaik && (
           <Button type="button" variant="ghost" size="icon" onClick={onNaik} aria-label="Naikkan" className="h-7 w-7">

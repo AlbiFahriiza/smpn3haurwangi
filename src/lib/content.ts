@@ -1,8 +1,9 @@
-import { db } from "@/lib/db";
+import { getStore } from "@/lib/store";
 
 /**
  * Tipe konten website SMPN 3 Haurwangi.
- * Seluruh konten disimpan per-seksi sebagai JSON di tabel ContentSection.
+ * Seluruh konten disimpan per-seksi sebagai dokumen JSON via ContentStore
+ * (Firestore cloud saat aktif, file JSON lokal sebagai fallback).
  */
 
 export interface Identity {
@@ -238,20 +239,13 @@ export const SECTION_KEYS = [
 
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
-/** Ambil seluruh konten dari database; seksi yang hilang menghasilkan null. */
+/** Ambil seluruh konten dari store; seksi yang hilang menghasilkan null. */
 export async function getSiteContent(): Promise<Partial<SiteContent>> {
-  const rows = await db.contentSection.findMany({
-    where: { key: { in: [...SECTION_KEYS] } },
-  });
+  const store = await getStore();
+  const raw = await store.getContentSections(SECTION_KEYS);
   const content: Record<string, unknown> = {};
-  for (const row of rows) {
-    try {
-      content[row.key] = JSON.parse(row.json);
-    } catch {
-      // JSON korup di satu seksi tidak boleh merobohkan seluruh halaman;
-      // seksi itu dibiarkan null dan komponennya menampilkan fallback.
-      content[row.key] = null;
-    }
+  for (const key of SECTION_KEYS) {
+    content[key] = raw[key] ?? null;
   }
   return content as Partial<SiteContent>;
 }

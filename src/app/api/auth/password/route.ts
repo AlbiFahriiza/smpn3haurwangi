@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { getStore } from "@/lib/store";
+import { getSession } from "@/lib/auth";
+import { hashPassword, verifyPassword } from "@/lib/password";
 
 export async function PUT(req: NextRequest) {
   const session = await getSession();
@@ -25,9 +26,8 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const user = await db.adminUser.findUnique({
-    where: { username: session.username },
-  });
+  const store = await getStore();
+  const user = await store.getAdminUser(session.username);
   if (!user || !verifyPassword(passwordLama, user.passwordHash)) {
     return NextResponse.json(
       { error: "Kata sandi lama salah." },
@@ -35,10 +35,7 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  await db.adminUser.update({
-    where: { id: user.id },
-    data: { passwordHash: hashPassword(passwordBaru) },
-  });
+  await store.putAdminUser({ ...user, passwordHash: hashPassword(passwordBaru) });
 
   return NextResponse.json({ ok: true });
 }

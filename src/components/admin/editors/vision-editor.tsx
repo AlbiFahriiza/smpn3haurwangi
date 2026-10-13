@@ -24,7 +24,7 @@ export function VisionEditor({
     rows: number
   ) => (
     <section className="rounded-lg border border-border bg-white p-5 space-y-2">
-      <h3 className="font-bold text-navy text-sm uppercase tracking-wide">{label}</h3>
+      <h3 className="font-bold text-abyss text-sm uppercase tracking-wide">{label}</h3>
       {form[key].map((t, i) => (
         <div key={i} className="flex gap-2 items-start">
           <div className="flex-1">
