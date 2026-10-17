@@ -1,20 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { FooterSection, Identity, ContactSection } from "@/lib/content";
+import { TAB_TO_PATH } from "@/lib/site";
 import { MapPin, Mail, Clock, LogIn, BadgeCheck, Landmark, Youtube } from "lucide-react";
 
 export function SiteFooter({
   footer,
   identity,
   contact,
-  onTab,
   onAdmin,
 }: {
   footer?: FooterSection;
   identity?: Identity;
   contact?: ContactSection;
-  onTab: (key: string) => void;
   onAdmin: () => void;
 }) {
   const nama = footer?.nama ?? identity?.nama ?? "SMP Negeri 3 Haurwangi";
@@ -71,12 +71,12 @@ export function SiteFooter({
             <ul className="mt-4 space-y-2.5">
               {tautan.map((t) => (
                 <li key={t.tab}>
-                  <button
-                    onClick={() => onTab(t.tab)}
+                  <Link
+                    href={TAB_TO_PATH[t.tab] ?? "/"}
                     className="text-sm text-white/80 hover:text-white hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-white rounded-sm"
                   >
                     {t.label}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -2,34 +2,31 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Identity } from "@/lib/content";
-import type { TabKey } from "./school-website";
+import { NAV_ORDER, ROUTES } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { LogIn, Menu, X } from "lucide-react";
 
-const NAV: { key: TabKey; label: string }[] = [
-  { key: "beranda", label: "Beranda" },
-  { key: "tentang", label: "Tentang Sekolah" },
-  { key: "ekskul", label: "Ekstrakurikuler" },
-  { key: "galeri", label: "Galeri" },
-  { key: "kontak", label: "Kontak" },
-];
+/** Menu utama diambil dari definisi rute agar label dan path selalu sinkron. */
+const NAV = NAV_ORDER.map((key) => ROUTES[key]);
 
 export function SiteHeader({
   identity,
-  tab,
-  onTab,
   onAdmin,
 }: {
   identity?: Identity;
-  tab: TabKey;
-  onTab: (key: string) => void;
   onAdmin: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
   const nama = identity?.nama ?? "SMP Negeri 3 Haurwangi";
   const npsn = identity?.npsn ?? "20252209";
   const akreditasi = identity?.akreditasi ?? "Terakreditasi B";
+
+  const isActive = (path: string) =>
+    path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 
   return (
     <header className="sticky top-0 z-40">
@@ -53,8 +50,8 @@ export function SiteHeader({
       <div className="bg-white/95 backdrop-blur border-b border-line">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex items-center justify-between gap-3 h-16 md:h-[68px]">
-            <button
-              onClick={() => onTab("beranda")}
+            <Link
+              href="/"
               className="flex items-center gap-3 text-left rounded-md focus-visible:outline-2 focus-visible:outline-marine min-w-0"
               aria-label={`${nama}, kembali ke beranda`}
             >
@@ -79,18 +76,18 @@ export function SiteHeader({
                     : ", Jawa Barat"}
                 </span>
               </span>
-            </button>
+            </Link>
 
             <nav aria-label="Navigasi utama" className="hidden md:block">
               <ul className="flex items-center gap-1">
                 {NAV.map((item) => {
-                  const active = tab === item.key;
+                  const active = isActive(item.path);
                   return (
-                    <li key={item.key}>
-                      <button
-                        onClick={() => onTab(item.key)}
+                    <li key={item.path}>
+                      <Link
+                        href={item.path}
                         aria-current={active ? "page" : undefined}
-                        className={`relative px-3 lg:px-4 py-2 text-sm font-semibold rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-marine ${
+                        className={`relative inline-block px-3 lg:px-4 py-2 text-sm font-semibold rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-marine ${
                           active
                             ? "text-marine bg-sky"
                             : "text-ink/75 hover:text-marine hover:bg-sky/60"
@@ -103,7 +100,7 @@ export function SiteHeader({
                             className="absolute left-3 right-3 -bottom-[9px] h-0.5 bg-marine rounded-full"
                           />
                         )}
-                      </button>
+                      </Link>
                     </li>
                   );
                 })}
@@ -112,11 +109,11 @@ export function SiteHeader({
 
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => onTab("kontak")}
+                asChild
                 size="sm"
                 className="hidden md:inline-flex bg-marine hover:bg-marine-hover text-white font-semibold"
               >
-                Hubungi Sekolah
+                <Link href={ROUTES.kontak.path}>Hubungi Sekolah</Link>
               </Button>
               <button
                 onClick={onAdmin}
@@ -145,20 +142,19 @@ export function SiteHeader({
         >
           <ul className="mx-auto max-w-6xl px-4 py-3 space-y-1">
             {NAV.map((item) => (
-              <li key={item.key}>
-                <button
-                  onClick={() => {
-                    onTab(item.key);
-                    setMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-md font-semibold ${
-                    tab === item.key
+              <li key={item.path}>
+                <Link
+                  href={item.path}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={isActive(item.path) ? "page" : undefined}
+                  className={`block w-full px-4 py-3 rounded-md font-semibold ${
+                    isActive(item.path)
                       ? "text-marine bg-sky"
                       : "text-ink/80 hover:bg-sky/60"
                   }`}
                 >
                   {item.label}
-                </button>
+                </Link>
               </li>
             ))}
             <li className="pt-2 border-t border-line">

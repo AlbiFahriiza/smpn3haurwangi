@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { HomeSection } from "@/lib/content";
+import { ROUTES } from "@/lib/site";
 import { BadgeCheck, Landmark, CalendarDays } from "lucide-react";
 
 const BADGE_ICONS: Record<string, typeof BadgeCheck> = {
@@ -10,13 +12,7 @@ const BADGE_ICONS: Record<string, typeof BadgeCheck> = {
   calendar: CalendarDays,
 };
 
-export function HeroSection({
-  home,
-  onTab,
-}: {
-  home?: HomeSection;
-  onTab: (key: string) => void;
-}) {
+export function HeroSection({ home }: { home?: HomeSection }) {
   const hero = home?.hero;
   const image = hero?.image || "/images/hero/gerbang-utama.jpg";
   const badges = hero?.badges ?? [];
@@ -43,18 +39,18 @@ export function HeroSection({
             </p>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <button
-                onClick={() => onTab("tentang")}
+              <Link
+                href={ROUTES.tentang.path}
                 className="rounded-lg bg-marine px-5 py-3 text-sm font-bold text-white hover:bg-marine-hover hover:-translate-y-[1px] active:translate-y-[1px] transition-all duration-200 focus-visible:outline-2 focus-visible:outline-marine focus-visible:outline-offset-2"
               >
                 Tentang Sekolah
-              </button>
-              <button
-                onClick={() => onTab("galeri")}
+              </Link>
+              <Link
+                href={ROUTES.galeri.path}
                 className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-bold text-abyss hover:border-marine hover:text-marine transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-marine focus-visible:outline-offset-2"
               >
                 Lihat Galeri
-              </button>
+              </Link>
             </div>
 
             {badges.length > 0 && (

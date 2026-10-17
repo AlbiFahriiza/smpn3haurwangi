@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getStore } from "@/lib/store";
 import { getSession } from "@/lib/auth";
 import { getSiteContent, SECTION_KEYS, type SectionKey } from "@/lib/content";
@@ -55,6 +56,10 @@ export async function PUT(req: NextRequest) {
 
   const store = await getStore();
   await store.updateContentSection(key, body.json);
+
+  // Konten berubah → halaman statis (ISR) perlu dibuat ulang agar pembaca
+  // langsung melihat versi baru, bukan menunggu masa revalidate.
+  revalidatePath("/", "layout");
 
   return NextResponse.json({ ok: true, key, backend: store.kind });
 }

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getStore } from "@/lib/store";
 
 /**
@@ -239,8 +240,12 @@ export const SECTION_KEYS = [
 
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
-/** Ambil seluruh konten dari store; seksi yang hilang menghasilkan null. */
-export async function getSiteContent(): Promise<Partial<SiteContent>> {
+/**
+ * Ambil seluruh konten dari store; seksi yang hilang menghasilkan null.
+ * Dibungkus cache() React agar satu request (layout + halaman) hanya membaca
+ * store satu kali.
+ */
+export const getSiteContent = cache(async (): Promise<Partial<SiteContent>> => {
   const store = await getStore();
   const raw = await store.getContentSections(SECTION_KEYS);
   const content: Record<string, unknown> = {};
@@ -248,4 +253,4 @@ export async function getSiteContent(): Promise<Partial<SiteContent>> {
     content[key] = raw[key] ?? null;
   }
   return content as Partial<SiteContent>;
-}
+});

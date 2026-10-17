@@ -8,25 +8,19 @@ import { DenahSection } from "../denah-section";
 import { RoutinesSection } from "../routines-section";
 import { BeritaSection } from "../berita-section";
 
-export function BerandaTab({
-  content,
-  onTab,
-}: {
-  content: Partial<SiteContent>;
-  onTab: (key: string) => void;
-}) {
+export function BerandaTab({ content }: { content: Partial<SiteContent> }) {
   const home = content.home;
   const denah = content.denah;
   const routines = content.routines;
 
   return (
     <>
-      <HeroSection home={home} onTab={onTab} />
+      <HeroSection home={home} />
       <StatsBand stats={home?.stats} />
       <SambutanSection sambutan={home?.sambutan} identity={content.identity} />
       <DenahSection denah={denah} />
       <RoutinesSection routines={routines} />
-      <BeritaSection berita={home?.berita} onTab={onTab} />
+      <BeritaSection berita={home?.berita} />
     </>
   );
 }

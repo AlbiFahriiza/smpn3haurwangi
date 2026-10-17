@@ -1,16 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { BeritaItem } from "@/lib/content";
+import { ROUTES } from "@/lib/site";
 import { Newspaper } from "lucide-react";
 
-export function BeritaSection({
-  berita,
-  onTab,
-}: {
-  berita?: BeritaItem[];
-  onTab: (key: string) => void;
-}) {
+export function BeritaSection({ berita }: { berita?: BeritaItem[] }) {
   const items = berita ?? [];
   if (items.length === 0) return null;
 
@@ -29,12 +25,12 @@ export function BeritaSection({
           >
             Berita Sekolah
           </h2>
-          <button
-            onClick={() => onTab("galeri")}
+          <Link
+            href={ROUTES.galeri.path}
             className="text-sm font-semibold text-marine hover:underline focus-visible:outline-2 focus-visible:outline-marine rounded-sm"
           >
             Lihat galeri
-          </button>
+          </Link>
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[3fr_2fr]">
