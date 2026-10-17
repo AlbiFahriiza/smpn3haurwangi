@@ -40,7 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-local-*
+# hanya berkas lokal di akar repo (mis. local-notes.md), JANGAN src/lib/store/local-*.ts
+/local-*
 .claude
 .z-ai-config
 *.log

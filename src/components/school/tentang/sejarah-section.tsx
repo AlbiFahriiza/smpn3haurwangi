@@ -25,7 +25,7 @@ export function SejarahSection({
         </h1>
 
         <div className="mt-10 grid gap-12 lg:grid-cols-[3fr_2fr]">
-          <div className="space-y-5 text-sm md:text-[15px] leading-[1.85] text-ink/90 max-w-[68ch]">
+          <div className="min-w-0 space-y-5 text-sm md:text-[15px] leading-[1.85] text-ink/90 max-w-[68ch]">
             {sejarah.length > 0 ? (
               sejarah.map((paragraf, i) => (
                 <p
@@ -52,7 +52,7 @@ export function SejarahSection({
           </div>
 
           {/* Kartu identitas resmi */}
-          <aside className="rounded-lg border border-line bg-white self-start shadow-[0_14px_36px_-24px_oklch(0.298_0.076_252.5/0.3)]">
+          <aside className="min-w-0 rounded-lg border border-line bg-white self-start shadow-[0_14px_36px_-24px_oklch(0.298_0.076_252.5/0.3)]">
             <div className="rounded-t-lg bg-abyss px-5 py-4 flex items-center gap-2">
               <BadgeCheck className="w-5 h-5 text-white" aria-hidden />
               <h2 className="text-sm font-bold text-white">Identitas Sekolah</h2>

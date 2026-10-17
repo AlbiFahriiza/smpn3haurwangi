@@ -44,12 +44,14 @@ export function TextAreaField({
   onChange,
   rows = 3,
   placeholder,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   rows?: number;
   placeholder?: string;
+  hint?: string;
 }) {
   return (
     <div className="space-y-1.5">
@@ -60,6 +62,7 @@ export function TextAreaField({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
       />
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }

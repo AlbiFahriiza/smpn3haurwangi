@@ -28,14 +28,20 @@ const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "smpn3haurwangi2026"; // wajib dig guru setelah login pertama
 
 async function bootstrapAdmin(store: ContentStore): Promise<void> {
-  const existing = await store.getAdminUser(DEFAULT_ADMIN_USERNAME);
-  if (existing) return;
-  await store.putAdminUser({
-    username: DEFAULT_ADMIN_USERNAME,
-    name: "Administrator Sekolah",
-    role: "admin",
-    passwordHash: hashPassword(DEFAULT_ADMIN_PASSWORD),
-  });
+  try {
+    const existing = await store.getAdminUser(DEFAULT_ADMIN_USERNAME);
+    if (existing) return;
+    await store.putAdminUser({
+      username: DEFAULT_ADMIN_USERNAME,
+      name: "Administrator Sekolah",
+      role: "admin",
+      passwordHash: hashPassword(DEFAULT_ADMIN_PASSWORD),
+    });
+  } catch (error) {
+    // Di lingkungan dengan berkas hanya-baca (mis. serverless), pembuatan akun
+    // awal gagal. Situs tetap harus bisa dibaca; kelola admin lewat Firestore.
+    console.warn("[store] Gagal menyiapkan akun admin awal:", error);
+  }
 }
 
 async function seedFirestoreFromLocal(store: ContentStore): Promise<void> {
