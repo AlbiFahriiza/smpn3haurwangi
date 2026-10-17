@@ -57,9 +57,7 @@ export function SiteHeader({
     path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 
   return (
-    <header
-      className={`sticky top-0 z-40 transition-[background-color,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${BAR[field]}`}
-    >
+    <header className={`sticky top-0 z-40 ${BAR[field]}`}>
       <div className="chapter-inner">
         <div className="flex h-[var(--nav-h)] items-center justify-between gap-2 md:gap-4">
           <Link

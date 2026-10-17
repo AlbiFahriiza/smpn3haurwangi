@@ -1,30 +1,61 @@
 "use client";
 
-import type { ContactSection } from "@/lib/content";
-import { MapPin, Mail, Phone, Clock, ExternalLink, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import Image from "next/image";
+import type { SiteContent } from "@/lib/content";
+import { Chapter, Inner } from "../chapters/chapter";
+import { Reveal } from "@/components/motion/reveal";
+import { OpenerChapter } from "../chapters/opener-chapter";
+import { BIDANG_PEMBUKA } from "@/lib/chapter-fields";
 import { useToast } from "@/hooks/use-toast";
 
-export function KontakTab({ content }: { content: Partial<KontakTabContent> }) {
-  const contact = content.contact;
-  const [terkirim, setTerkirim] = useState(false);
-  const { toast } = useToast();
+/** Tiga penanda yang pertama terlihat saat orang sampai di sekolah. */
+const PENANDA = [
+  {
+    src: "/images/hero/gerbang-utama.jpg",
+    alt: "Gerbang utama SMP Negeri 3 Haurwangi dari Jalan Buniayu",
+    judul: "Gerbang utama",
+  },
+  {
+    src: "/images/fasilitas/fasilitas-6.jpg",
+    alt: "Halaman dan tempat parkir SMP Negeri 3 Haurwangi",
+    judul: "Halaman & parkir",
+  },
+  {
+    src: "/images/fasilitas/fasilitas-9.jpg",
+    alt: "Blok ruang kelas SMP Negeri 3 Haurwangi",
+    judul: "Blok ruang kelas",
+  },
+];
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Formulir pesan tamu: sekolah belum punya backend email,
-    // arahkan pengiriman ke alamat email resmi lewat mailto.
-    const form = e.currentTarget;
-    const data = new FormData(form);
+/**
+ * Halaman Kontak: alamat, surel, jam layanan, peta, dan satu formulir yang
+ * mengarahkan pesan ke surel resmi sekolah.
+ *
+ * Nomor telepon tidak ditampilkan karena sumber resmi belum mempublikasikannya;
+ * hal itu disebutkan terbuka supaya tidak terbaca sebagai data yang hilang.
+ */
+export function KontakTab({ content }: { content: Partial<SiteContent> }) {
+  const contact = content.contact;
+  const identity = content.identity;
+  const { toast } = useToast();
+  const [terkirim, setTerkirim] = useState(false);
+
+  const alamat = contact?.alamat ?? identity?.alamat ?? "";
+  const surel = contact?.email ?? identity?.email ?? "smpn3_haurwangi@yahoo.com";
+  const jam = contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB";
+  const petaEmbed = contact?.mapsEmbed ?? "https://www.google.com/maps?q=-6.8005,107.3064&z=16&output=embed";
+  const petaTautan = contact?.mapsLink ?? "https://www.google.com/maps?q=-6.8005,107.3064";
+  const sosial = contact?.sosial ?? [];
+  const surelUrl = `mailto:${surel}?subject=Pertanyaan%20tentang%20SMP%20Negeri%203%20Haurwangi`;
+
+  const kirim = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
     const nama = String(data.get("nama") ?? "");
     const pesan = String(data.get("pesan") ?? "");
-    const email = contact?.email ?? "smpn3_haurwangi@yahoo.com";
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(
-      `Pesan dari ${nama} melalui website sekolah`
+    window.location.href = `mailto:${surel}?subject=${encodeURIComponent(
+      `Pesan dari ${nama} melalui website sekolah`,
     )}&body=${encodeURIComponent(pesan)}`;
     setTerkirim(true);
     toast({
@@ -33,147 +64,196 @@ export function KontakTab({ content }: { content: Partial<KontakTabContent> }) {
     });
   };
 
+  const keterangan: Array<[string, React.ReactNode]> = [
+    ["Alamat", alamat],
+    [
+      "Surel resmi",
+      <a
+        key="surel"
+        href={surelUrl}
+        className="break-words underline decoration-marine/40 underline-offset-4 transition-colors hover:decoration-marine"
+      >
+        {surel}
+      </a>,
+    ],
+    ["Jam layanan", jam],
+    [
+      "Telepon",
+      <span key="telepon" className="field-soft">
+        Belum dipublikasikan pada sumber resmi sekolah
+      </span>,
+    ],
+  ];
+
   return (
-    <section aria-labelledby="kontak-title" className="bg-white py-14 md:py-20">
-      <div className="mx-auto max-w-6xl px-4">
-        <h1
-          id="kontak-title"
-          className="text-3xl md:text-4xl font-extrabold text-abyss tracking-tight"
-        >
-          Kontak
-        </h1>
+    <>
+      <OpenerChapter
+        field={BIDANG_PEMBUKA["/kontak"].field}
+        nav={BIDANG_PEMBUKA["/kontak"].ink}
+        judul="Kontak"
+        pengantar="Alamat, surel, dan jam layanan SMP Negeri 3 Haurwangi. Surel adalah saluran resmi yang paling cepat dibalas."
+        keterangan={
+          <p className="t-small field-soft">
+            Jalan Buniayu, Kertamukti · {jam}
+          </p>
+        }
+        gambar={{
+          src: "/images/galeri/foto-bersama-guru-1.jpg",
+          alt: "Guru dan staf SMP Negeri 3 Haurwangi",
+        }}
+      />
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[5fr_7fr] items-start">
-          {/* Info kontak */}
-          <div className="space-y-4">
-            <div className="rounded-lg border border-line bg-foam p-5">
-              <h2 className="text-sm font-bold text-abyss flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-marine" aria-hidden />
-                Alamat
-              </h2>
-              <p className="mt-2.5 text-sm text-ink/85 leading-relaxed">
-                {contact?.alamat ??
-                  "Jalan Buniayu, Desa Kertamukti, Kec. Haurwangi, Kab. Cianjur, Jawa Barat 43282"}
-              </p>
-              {contact?.mapsLink && (
-                <a
-                  href={contact.mapsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-marine hover:underline focus-visible:outline-2 focus-visible:outline-marine rounded-sm"
-                >
-                  Buka di Google Maps
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden />
-                </a>
-              )}
-            </div>
+      <Chapter field="foam" nav="light" pad="tall" id="alamat-dan-surel">
+        <Inner>
+          <Reveal stagger={0.07}>
+            <h2 data-reveal-item className="t-head">
+              Alamat &amp; saluran resmi
+            </h2>
+            <p data-reveal-item className="t-body field-soft mt-7 max-w-[56ch]">
+              Surel resmi yang dipublikasikan sekolah hanya satu, dan itulah saluran yang dibaca
+              pada hari kerja. Selain surel, kunjungan langsung sebaiknya dijadwalkan lebih dulu.
+            </p>
 
-            <ul className="rounded-lg border border-line bg-foam divide-y divide-line">
-              {[
-                {
-                  ikon: Mail,
-                  label: "Surel",
-                  nilai: contact?.email ?? "smpn3_haurwangi@yahoo.com",
-                  href: `mailto:${contact?.email ?? "smpn3_haurwangi@yahoo.com"}`,
-                },
-                {
-                  ikon: Phone,
-                  label: "Telepon",
-                  nilai: contact?.telepon || "Belum tersedia",
-                },
-                {
-                  ikon: Clock,
-                  label: "Jam Layanan",
-                  nilai: contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB",
-                },
-              ].map((row) => (
-                <li key={row.label} className="flex items-start gap-3 p-5">
-                  <row.ikon className="w-4 h-4 mt-0.5 text-marine shrink-0" aria-hidden />
-                  <div>
-                    <p className="text-xs font-semibold tracking-wide text-slate-ink">
-                      {row.label}
-                    </p>
-                    {row.href ? (
-                      <a
-                        href={row.href}
-                        className="mt-0.5 block text-sm font-semibold text-abyss hover:text-marine transition-colors"
-                      >
-                        {row.nilai}
-                      </a>
-                    ) : (
-                      <p className="mt-0.5 text-sm font-semibold text-abyss">{row.nilai}</p>
-                    )}
+            <dl className="mt-12 grid gap-x-16 gap-y-8 md:grid-cols-2">
+              {keterangan.map(([label, nilai]) => (
+                <div key={label} data-reveal-item className="min-w-0">
+                  <dt className="t-small field-soft">{label}</dt>
+                  <dd className="t-body mt-1">{nilai}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {sosial.length > 0 ? (
+              <div data-reveal-item className="mt-12">
+                <p className="t-small field-soft">Saluran lain</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {sosial.map((kanal) => (
+                    <a
+                      key={kanal.nama}
+                      href={kanal.url}
+                      {...(kanal.url.startsWith("http")
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                      className="t-small bg-abyss px-5 py-3 font-semibold text-white transition-colors hover:bg-deep"
+                    >
+                      {kanal.nama}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </Reveal>
+
+          <Reveal className="mt-20" stagger={0.06}>
+            <h3 data-reveal-item className="t-body field-soft">
+              Penanda saat berkunjung
+            </h3>
+            <ul className="mt-8 grid gap-x-8 gap-y-8 sm:grid-cols-3">
+              {PENANDA.map((penanda) => (
+                <li key={penanda.src} data-reveal-item>
+                  <div className="relative aspect-[4/3] overflow-hidden bg-deep">
+                    <Image
+                      src={penanda.src}
+                      alt={penanda.alt}
+                      fill
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover"
+                    />
                   </div>
+                  <p className="t-small field-soft mt-3">{penanda.judul}</p>
                 </li>
               ))}
             </ul>
-
-            {/* Formulir pesan */}
-            <form
-              onSubmit={submit}
-              className="rounded-lg border border-line bg-foam p-5 space-y-4"
-            >
-              <h2 className="text-sm font-bold text-abyss">Kirim Pesan</h2>
-              <div className="space-y-1.5">
-                <Label htmlFor="pesan-nama">Nama</Label>
-                <Input
-                  id="pesan-nama"
-                  name="nama"
-                  required
-                  placeholder="Nama lengkap Anda"
-                  autoComplete="name"
-                  className="bg-white"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="pesan-isi">Pesan</Label>
-                <Textarea
-                  id="pesan-isi"
-                  name="pesan"
-                  required
-                  rows={4}
-                  placeholder="Tulis pertanyaan, saran, atau masukan Anda"
-                  className="bg-white resize-none"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full gap-2 bg-marine hover:bg-marine-hover text-white font-semibold"
-              >
-                <Send className="w-4 h-4" aria-hidden />
-                {terkirim ? "Buka Aplikasi Surel" : "Kirim Pesan"}
-              </Button>
-              <p className="text-[11px] text-slate-ink">
-                Pesan akan diteruskan ke surel resmi sekolah{" "}
-                ({contact?.email ?? "smpn3_haurwangi@yahoo.com"}).
-              </p>
-            </form>
-          </div>
-
-          {/* Peta lokasi */}
-          <div className="rounded-lg overflow-hidden border border-line bg-white lg:sticky lg:top-32">
-            <iframe
-              src={
-                contact?.mapsEmbed ??
-                "https://www.google.com/maps?q=-6.8005,107.3064&z=16&output=embed"
-              }
-              title="Peta lokasi SMP Negeri 3 Haurwangi"
-              className="w-full h-[380px] md:h-[480px] border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-            />
-            <p className="flex items-center gap-2 px-4 py-3 text-xs text-slate-ink border-t border-line">
-              <MapPin className="w-4 h-4 text-marine shrink-0" aria-hidden />
-              Koordinat -6.8005, 107.3064, Desa Kertamukti, Kec. Haurwangi.
+            <p className="t-body field-soft mt-6 max-w-[62ch]">
+              Ketiga tempat di atas adalah yang paling sering ditanyakan saat kunjungan;
+              sebutkan salah satunya saat menghubungi sekolah lewat surel.
             </p>
+          </Reveal>
+        </Inner>
+      </Chapter>
+
+      <Chapter field="sky" nav="light" pad="tall" id="peta-dan-pesan">
+        <Inner>
+          <div className="grid gap-x-16 gap-y-24 lg:grid-cols-12 lg:gap-y-14">
+            <Reveal className="lg:col-span-7" stagger={0.07}>
+              <h2 data-reveal-item className="t-head">
+                Peta lokasi
+              </h2>
+              <p data-reveal-item className="t-body field-soft mt-6 max-w-[52ch]">
+                Sekolah berada di Jalan Buniayu, Desa Kertamukti, Kecamatan Haurwangi,
+                Kabupaten Cianjur. Untuk kunjungan, sebutkan tanggal dan keperluannya lebih
+                dulu supaya bisa dijadwalkan.
+              </p>
+              <div data-reveal-item className="mt-8">
+                <iframe
+                  src={petaEmbed}
+                  title="Peta lokasi SMP Negeri 3 Haurwangi"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                  className="h-[320px] w-full border-0 md:h-[420px]"
+                />
+              </div>
+              <p data-reveal-item className="t-small field-soft mt-4">
+                Koordinat -6,8005 / 107,3064 ·{" "}
+                <a
+                  href={petaTautan}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current"
+                >
+                  Buka di Google Maps
+                </a>
+              </p>
+            </Reveal>
+
+            <Reveal className="lg:col-span-5" stagger={0.07}>
+              <h2 data-reveal-item className="t-head">
+                Kirim pesan
+              </h2>
+              <p data-reveal-item className="t-body field-soft mt-6 max-w-[42ch]">
+                Tulis pertanyaan, saran, atau masukan. Pesan akan diteruskan ke surel resmi
+                sekolah lewat aplikasi surel di perangkat Anda.
+              </p>
+
+              <form data-reveal-item onSubmit={kirim} className="mt-8 space-y-6">
+                <div>
+                  <label htmlFor="pesan-nama" className="t-small field-soft">
+                    Nama
+                  </label>
+                  <input
+                    id="pesan-nama"
+                    name="nama"
+                    required
+                    autoComplete="name"
+                    placeholder="Nama lengkap Anda"
+                    className="t-body mt-2 w-full bg-white px-4 py-3 text-ink placeholder:text-ink/70"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pesan-isi" className="t-small field-soft">
+                    Pesan
+                  </label>
+                  <textarea
+                    id="pesan-isi"
+                    name="pesan"
+                    required
+                    rows={5}
+                    placeholder="Tulis pertanyaan, saran, atau masukan Anda"
+                    className="t-body mt-2 w-full resize-none bg-white px-4 py-3 text-ink placeholder:text-ink/70"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="t-body bg-abyss px-7 py-4 font-semibold text-white transition-colors hover:bg-deep"
+                >
+                  {terkirim ? "Buka aplikasi surel" : "Kirim pesan"}
+                </button>
+              </form>
+            </Reveal>
           </div>
-        </div>
-      </div>
-    </section>
+        </Inner>
+      </Chapter>
+    </>
   );
 }
-
-type KontakTabContent = {
-  contact: ContactSection;
-};

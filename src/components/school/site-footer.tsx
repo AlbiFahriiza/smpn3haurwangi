@@ -39,7 +39,9 @@ export function SiteFooter({
   return (
     <Chapter field="deep" nav="dark" pad="normal" className="pb-10">
       <Inner>
-        <h2 className="t-hero">
+        {/* Tanda tangan halaman. Ukurannya menyusut di layar sempit supaya nama
+            sekolah tetap utuh dalam dua baris, tidak pecah jadi tiga. */}
+        <h2 className="text-[clamp(2rem,7.6vw,9.375rem)] font-extrabold leading-[0.86] tracking-[-0.05em] [font-kerning:none]">
           {barisPertama}{" "}
           <br />
           {barisKedua}
@@ -133,7 +135,7 @@ export function SiteFooter({
           </div>
         </div>
 
-        <p className="t-small mt-14 opacity-70">
+        <p className="t-small mt-14 max-w-[62ch] opacity-70">
           © {new Date().getFullYear()} {nama}. {footer?.credit ?? "Dikelola Tim Media Sekolah"}.
           Data sinkron Dapodik semester 2026/2027.
         </p>

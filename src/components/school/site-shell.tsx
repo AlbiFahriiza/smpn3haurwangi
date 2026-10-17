@@ -9,9 +9,8 @@ import { SiteFooter } from "./site-footer";
 import {
   ChapterThemeProvider,
   ChapterThemeWatcher,
-  type Field,
-  type NavTheme,
 } from "@/components/motion/chapter-theme";
+import { BIDANG_AWAL_BERANDA, BIDANG_PEMBUKA } from "@/lib/chapter-fields";
 import dynamic from "next/dynamic";
 // Panel admin hanya dibuka lewat #admin atau tombol footer, jadi tidak perlu
 // ikut terunduh di kunjungan biasa: kode panel (beserta Firebase) dimuat saat
@@ -38,11 +37,6 @@ export function SiteShell({
   const pathname = usePathname();
   const router = useRouter();
 
-  // Beranda punya bab-babnya sendiri yang membawa warna; halaman lain memakai
-  // satu bidang terang untuk seluruh isinya supaya navigasi tetap terbaca.
-  const bidang: { "data-field"?: Field; "data-nav"?: NavTheme } =
-    pathname === "/" ? {} : { "data-field": "foam", "data-nav": "light" };
-
   // Kompatibilitas tautan lama: #tab=<nama> diarahkan ke rute baru, #admin membuka panel.
   useEffect(() => {
     const handler = () => {
@@ -61,13 +55,17 @@ export function SiteShell({
     return () => window.removeEventListener("hashchange", handler);
   }, [pathname, router]);
 
+  // Warna bab pembuka halaman menentukan warna awal batang navigasi, supaya
+  // tidak ada kedipan satu bingkai sebelum JavaScript membaca babnya.
+  const bidangAwal = BIDANG_PEMBUKA[pathname] ?? BIDANG_AWAL_BERANDA;
+
   return (
-    <ChapterThemeProvider>
+    <ChapterThemeProvider initial={bidangAwal}>
       <ChapterThemeWatcher />
       <div className="min-h-screen flex flex-col bg-background">
         <SiteHeader identity={content.identity} onAdmin={() => setAdminOpen(true)} />
 
-        <main id="konten-utama" className="flex-1" {...bidang}>
+        <main id="konten-utama" className="flex-1">
           {children}
         </main>
 

@@ -29,9 +29,20 @@ export function useChapterTheme() {
   return useContext(ChapterThemeContext);
 }
 
-export function ChapterThemeProvider({ children }: { children: React.ReactNode }) {
-  const [ink, setInk] = useState<NavTheme>("light");
-  const [field, setField] = useState<Field>("foam");
+export function ChapterThemeProvider({
+  children,
+  initial,
+}: {
+  children: React.ReactNode;
+  /**
+   * Warna bab pembuka halaman. Dipasang sebagai keadaan awal (ikut dirender di
+   * server) supaya batang navigasi tidak pernah tampil dengan warna bidang yang
+   * salah sebelum JavaScript berjalan.
+   */
+  initial?: { ink?: NavTheme; field?: Field };
+}) {
+  const [ink, setInk] = useState<NavTheme>(initial?.ink ?? "light");
+  const [field, setField] = useState<Field>(initial?.field ?? "foam");
 
   // Identitas fungsi harus tetap supaya efek di watcher tidak dibuat ulang
   // setiap kali warna bab berganti.

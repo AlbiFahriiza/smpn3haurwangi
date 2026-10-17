@@ -50,6 +50,9 @@
   --color-sky: var(--sky);
   --color-foam: var(--foam);
   --color-ink: var(--ink);
+  /* Bidang "deep" dipakai bab penutup dan batang navigasi; samakan dengan
+     --field-deep supaya kelas bg-deep/text-deep benar-benar ada. */
+  --color-deep: var(--field-deep);
   --color-slate-ink: var(--slate-ink);
   --color-line: var(--line);
   --font-display: var(--font-grotesk);

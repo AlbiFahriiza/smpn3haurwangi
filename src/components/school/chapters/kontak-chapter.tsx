@@ -106,9 +106,9 @@ export function KontakChapter({
               className="grid gap-8 bg-marine p-7 text-white md:grid-cols-12 md:items-end md:p-12"
             >
               <div className="md:col-span-7">
-                <h3 className="t-statement">
+                <p className="t-statement max-w-[34ch]">
                   Ada pertanyaan tentang pendaftaran, jadwal, atau kunjungan sekolah?
-                </h3>
+                </p>
                 <p className="t-body mt-4 text-white/85">
                   Surel sekolah dibaca dan dibalas pada hari kerja. Untuk kunjungan, sebutkan
                   tanggal dan keperluannya supaya bisa dijadwalkan lebih dulu.
@@ -135,11 +135,10 @@ export function KontakChapter({
             </div>
           </Reveal>
 
-          <p className="t-small field-soft mt-6">
+          <p className="t-body field-soft mt-6 max-w-[62ch]">
             Nomor telepon belum dipublikasikan pada sumber resmi sekolah, jadi tidak dicantumkan
             di sini. Alamat dan surel di atas berasal dari data resmi Kemendikdasmen.
           </p>
-
           <Link
             href={ROUTES.kontak.path}
             className="t-small mt-8 inline-flex items-center gap-2 font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
