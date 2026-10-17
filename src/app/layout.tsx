@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import { Schibsted_Grotesk, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { getSiteContent } from "@/lib/content";
 import { ROUTES, SITE_LOCALE, SITE_NAME, SITE_URL } from "@/lib/site";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/school/json-ld";
 
-const jakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const grotesk = Schibsted_Grotesk({
+  variable: "--font-grotesk",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const sourceSerif = Source_Serif_4({
@@ -18,6 +19,8 @@ const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   weight: ["400", "600"],
   style: ["italic", "normal"],
+  // Hanya halaman Tentang yang memakai serif; beranda tidak perlu memuatnya.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -77,7 +80,7 @@ export default async function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body
-        className={`${jakartaSans.variable} ${sourceSerif.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${grotesk.variable} ${sourceSerif.variable} font-sans antialiased bg-background text-foreground`}
       >
         {/* Data terstruktur tingkat situs: profil sekolah dan situs web. */}
         <JsonLd
@@ -90,7 +93,7 @@ export default async function RootLayout({
             websiteJsonLd({ identity: content.identity }),
           ]}
         />
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
         <Toaster />
       </body>
     </html>

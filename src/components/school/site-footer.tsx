@@ -2,10 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { FooterSection, Identity, ContactSection } from "@/lib/content";
+import type { ContactSection, FooterSection, Identity } from "@/lib/content";
 import { TAB_TO_PATH } from "@/lib/site";
-import { MapPin, Mail, Clock, LogIn, BadgeCheck, Landmark, Youtube } from "lucide-react";
+import { Chapter, Inner } from "./chapters/chapter";
 
+/**
+ * Penutup halaman: nama sekolah kembali sebesar di pembuka, lalu satu baris
+ * fakta resmi dan tautan. Bukan daftar isi, tapi tanda tangan.
+ */
 export function SiteFooter({
   footer,
   identity,
@@ -29,95 +33,79 @@ export function SiteFooter({
     { label: "Kontak", tab: "kontak" },
   ];
 
+  const [barisPertama, ...rest] = nama.split(" ");
+  const barisKedua = rest.join(" ");
+
   return (
-    <footer className="mt-auto bg-abyss text-white">
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-          {/* Profil singkat */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3">
-              <span className="grid place-items-center w-12 h-12 rounded-lg bg-white/10">
-                <Image
-                  src="/images/logo.png"
-                  alt={`Logo ${nama}`}
-                  width={40}
-                  height={40}
-                  className="w-9 h-9 object-contain"
-                />
-              </span>
-              <div>
-                <p className="font-extrabold text-base leading-tight">{nama}</p>
-                <p className="text-xs text-white/70">NPSN {npsn}</p>
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-white/70 leading-relaxed">
-              {footer?.tagline ?? "Unggul dalam prestasi, santun dalam perilaku."}
-            </p>
-            <div className="mt-4 space-y-2 text-sm">
-              <p className="flex items-start gap-2 text-white/80">
-                <BadgeCheck className="w-4 h-4 mt-0.5 text-sky shrink-0" aria-hidden />
-                {footer?.akreditasi ?? "Akreditasi B"}
-              </p>
-              <p className="flex items-start gap-2 text-white/80">
-                <Landmark className="w-4 h-4 mt-0.5 text-sky shrink-0" aria-hidden />
-                {footer?.berdiri ?? "Berdiri 26 April 2006"}
-              </p>
-            </div>
+    <Chapter field="deep" nav="dark" pad="normal" className="pb-10">
+      <Inner>
+        <h2 className="t-hero">
+          {barisPertama}{" "}
+          <br />
+          {barisKedua}
+        </h2>
+
+        <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="t-small field-soft">Identitas</p>
+            <ul className="t-small mt-3 space-y-2">
+              <li>NPSN {npsn}</li>
+              <li>{identity?.status ?? "Negeri"} · {footer?.akreditasi ?? "Akreditasi B"}</li>
+              <li>{footer?.berdiri ?? "Berdiri 26 April 2006"}</li>
+              <li>{identity?.kurikulum ?? "Kurikulum Merdeka"}</li>
+            </ul>
+            <Image
+              src="/images/logo.png"
+              alt={`Logo ${nama}`}
+              width={64}
+              height={64}
+              className="mt-6 h-14 w-14 object-contain"
+            />
           </div>
 
-          {/* Navigasi */}
           <nav aria-label="Navigasi footer">
-            <h2 className="text-sm font-bold text-white/55">Menu</h2>
-            <ul className="mt-4 space-y-2.5">
-              {tautan.map((t) => (
-                <li key={t.tab}>
+            <p className="t-small field-soft">Halaman</p>
+            <ul className="t-small mt-3 space-y-2">
+              {tautan.map((item) => (
+                <li key={item.tab}>
                   <Link
-                    href={TAB_TO_PATH[t.tab] ?? "/"}
-                    className="text-sm text-white/80 hover:text-white hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-white rounded-sm"
+                    href={TAB_TO_PATH[item.tab] ?? "/"}
+                    className="underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                   >
-                    {t.label}
+                    {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
 
-          {/* Kontak */}
           <div>
-            <h2 className="text-sm font-bold text-white/55">Kontak</h2>
-            <ul className="mt-4 space-y-3 text-sm text-white/80">
-              <li className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 text-sky shrink-0" aria-hidden />
-                <span>{alamat}</span>
-              </li>
+            <p className="t-small field-soft">Kontak</p>
+            <ul className="t-small mt-3 space-y-2">
+              <li>{alamat}</li>
               {email && (
                 <li>
                   <a
                     href={`mailto:${email}`}
-                    className="flex items-start gap-2 hover:text-white transition-colors"
+                    className="break-words underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                   >
-                    <Mail className="w-4 h-4 mt-0.5 text-sky shrink-0" aria-hidden />
                     {email}
                   </a>
                 </li>
               )}
-              <li className="flex items-start gap-2">
-                <Clock className="w-4 h-4 mt-0.5 text-sky shrink-0" aria-hidden />
-                {contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB"}
-              </li>
+              <li>{contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB"}</li>
             </ul>
           </div>
 
-          {/* Tautan resmi */}
           <div>
-            <h2 className="text-sm font-bold text-white/55">Tautan Resmi</h2>
-            <ul className="mt-4 space-y-2.5 text-sm">
+            <p className="t-small field-soft">Sumber resmi</p>
+            <ul className="t-small mt-3 space-y-2">
               <li>
                 <a
                   href="https://sekolah.data.kemendikdasmen.go.id/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/80 hover:text-white transition-colors"
+                  className="underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                 >
                   Sekolah Kita, Kemendikdasmen
                 </a>
@@ -127,37 +115,29 @@ export function SiteFooter({
                   href="https://www.youtube.com/@Smpn3haurwangiofficial"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                  className="underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                 >
-                  <Youtube className="w-4 h-4" aria-hidden />
-                  YouTube Sekolah
+                  Kanal YouTube sekolah
                 </a>
               </li>
               <li>
                 <button
+                  type="button"
                   onClick={onAdmin}
-                  className="inline-flex items-center gap-2 text-white/55 hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-white rounded-sm"
+                  className="text-left underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                 >
-                  <LogIn className="w-4 h-4" aria-hidden />
-                  Login Admin (Guru)
+                  Masuk pengelola sekolah
                 </button>
               </li>
             </ul>
           </div>
         </div>
-      </div>
 
-      <div className="border-t border-white/12">
-        <div className="mx-auto max-w-6xl px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/60">
-          <p>
-            © {new Date().getFullYear()} {nama}. {footer?.credit ?? "Dikelola Tim Media Sekolah"}.
-          </p>
-          <p>
-            {(identity?.kabupaten ?? "Kab. Cianjur")},{" "}
-            {identity?.provinsi ?? "Jawa Barat"}. Data sinkron Dapodik semester 2026/2027.
-          </p>
-        </div>
-      </div>
-    </footer>
+        <p className="t-small mt-14 opacity-70">
+          © {new Date().getFullYear()} {nama}. {footer?.credit ?? "Dikelola Tim Media Sekolah"}.
+          Data sinkron Dapodik semester 2026/2027.
+        </p>
+      </Inner>
+    </Chapter>
   );
 }

@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   typescript: {
-    ignoreBuildErrors: true,
+    // Jangan pernah merilis dengan error tipe: `next build` ikut memeriksa tipe.
+    ignoreBuildErrors: false,
   },
   reactStrictMode: false,
   // firebase-admin hanya berjalan di server & memuat binari native gRPC:

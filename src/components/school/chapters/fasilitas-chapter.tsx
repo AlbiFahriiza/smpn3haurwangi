@@ -1,0 +1,239 @@
+"use client";
+
+import Image from "next/image";
+import { useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import type { DenahSection, Identity, StudentsSection } from "@/lib/content";
+import { Chapter, Inner } from "./chapter";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
+
+type Tempat = {
+  nama: string;
+  detail: string;
+  src: string;
+};
+
+/**
+ * Bab fasilitas: satu cakram warna dengan potret tempat di atasnya, dipilih
+ * dari daftar nama di sebelahnya. Cakram berputar sedikit mengikuti gulir,
+ * potretnya bergerak dua persen naik-turun seperti benda nyata di atas piring.
+ */
+export function FasilitasChapter({
+  denah,
+  students,
+  identity,
+}: {
+  denah?: DenahSection;
+  students?: StudentsSection;
+  identity?: Identity;
+}) {
+  const scope = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Keterangan tiap tempat diambil dari data sekolah; potret hanya dipakai
+  // untuk tempat yang memang punya dokumentasi.
+  const places: Tempat[] = [
+    {
+      nama: denah?.fasilitas?.[0]?.nama ?? "Lapang Upacara / Voli",
+      detail:
+        denah?.fasilitas?.[0]?.detail ??
+        "Tempat upacara bendera setiap Senin dan olahraga voli",
+      src: "/images/fasilitas/fasilitas-8.jpg",
+    },
+    {
+      nama: denah?.fasilitas?.[1]?.nama ?? "Lapang Badminton",
+      detail: denah?.fasilitas?.[1]?.detail ?? "Lapangan bulu tangkis di sisi tengah sekolah",
+      src: "/images/fasilitas/fasilitas-7.jpg",
+    },
+    {
+      nama: "Ruang Kelas",
+      detail: "14 ruang kelas pada blok G, dipakai tiga tingkat kelas.",
+      src: "/images/fasilitas/fasilitas-9.jpg",
+    },
+    {
+      nama: "Gedung Induk",
+      detail: "Blok A sampai C: ruang guru, ruang kepala sekolah, dan tata usaha.",
+      src: "/images/fasilitas/fasilitas-5.jpg",
+    },
+    {
+      nama: "Halaman Depan",
+      detail: "Halaman dan area parkir tepat di depan sekolah.",
+      src: "/images/fasilitas/fasilitas-6.jpg",
+    },
+  ];
+
+  const active = places[Math.min(activeIndex, places.length - 1)];
+  const kode = denah?.keterangan ?? [];
+  const bisa = students?.fasilitasBelajar ?? [];
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        gsap.fromTo(
+          "[data-disc-object]",
+          { yPercent: -2 },
+          {
+            yPercent: 2,
+            ease: "none",
+            scrollTrigger: {
+              trigger: scope.current,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+            },
+          },
+        );
+        gsap.from("[data-place-list] > li", {
+          y: 18,
+          opacity: 0,
+          duration: 0.7,
+          stagger: 0.07,
+          ease: "power4.out",
+          scrollTrigger: { trigger: "[data-place-list]", start: "top 86%", once: true },
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
+
+  // Potret dan keterangan berganti dengan satu gerak pendek, bukan kilatan.
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        gsap.from("[data-disc-object]", {
+          opacity: 0,
+          scale: 1.04,
+          duration: 0.55,
+          ease: "power3.out",
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope, dependencies: [activeIndex], revertOnUpdate: true },
+  );
+
+  return (
+    <Chapter field="sky" nav="light" pad="tall" id="fasilitas-sekolah">
+      <div ref={scope}>
+        <Inner>
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
+            {/* Cakram + potret tempat */}
+            <div className="lg:col-span-6">
+              <div className="relative mx-auto aspect-square w-full max-w-[30rem]">
+                <div className="absolute inset-0 rounded-full bg-abyss" aria-hidden />
+                <div className="absolute inset-[7%] overflow-hidden rounded-full" data-disc-object>
+                  <Image
+                    key={active.src}
+                    src={active.src}
+                    alt={`${active.nama} SMP Negeri 3 Haurwangi`}
+                    fill
+                    sizes="(min-width: 1024px) 30rem, 84vw"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+
+              <p className="t-small mt-6 text-center lg:text-left">
+                <span className="t-hero tabular-nums block leading-none">
+                  {identity?.luasTanah ?? "6.138 m²"}
+                </span>
+                <span className="field-soft block">Luas lahan sekolah</span>
+              </p>
+            </div>
+
+            {/* Daftar tempat */}
+            <div className="lg:col-span-6">
+              <h2 className="t-head">Fasilitas sekolah</h2>
+              <p className="t-body field-soft mt-4">
+                Pilih satu tempat untuk melihat keterangannya. Semua nama dan ukuran di bawah
+                diambil dari data resmi sekolah.
+              </p>
+
+              <ul data-place-list className="mt-8">
+                {places.map((place, index) => {
+                  const isActive = index === activeIndex;
+                  return (
+                    <li key={place.nama}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveIndex(index)}
+                        aria-pressed={isActive}
+                        className={`w-full px-5 py-4 text-left transition-colors ${
+                          isActive ? "bg-abyss text-white" : "hover:bg-abyss/6"
+                        }`}
+                      >
+                        <span className="flex items-baseline gap-4">
+                          <span className={`t-statement ${isActive ? "" : "field-soft"}`}>
+                            {place.nama}
+                          </span>
+                        </span>
+                        <span
+                          className={`t-small mt-1 block ${
+                            isActive ? "text-white/90" : "field-soft"
+                          }`}
+                        >
+                          {place.detail}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </Inner>
+
+        {/* Denah + keterangan blok */}
+        <Inner className="mt-16 md:mt-24">
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <figure className="lg:col-span-7">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+                <Image
+                  src={denah?.image ?? "/images/denah-sekolah.jpg"}
+                  alt="Denah blok bangunan SMP Negeri 3 Haurwangi"
+                  fill
+                  sizes="(min-width: 1024px) 55vw, 92vw"
+                  className="object-contain"
+                />
+              </div>
+              <figcaption className="t-small field-soft mt-3">
+                {denah?.title ?? "Denah Sekolah"} — {denah?.description ?? ""}
+              </figcaption>
+            </figure>
+
+            <div className="lg:col-span-5">
+              <h3 className="t-statement">Blok A sampai K</h3>
+              <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2">
+                {kode.map((item) => (
+                  <div key={item.kode} className="flex gap-2">
+                    <dt className="t-small tabular-nums font-semibold">{item.kode}</dt>
+                    <dd className="t-small field-soft">{item.nama}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {bisa.length > 0 && (
+                <ul className="mt-8 space-y-2">
+                  {bisa.map((item) => (
+                    <li key={item.nama} className="t-small flex justify-between gap-4">
+                      <span>{item.nama}</span>
+                      <span className="tabular-nums font-semibold">{item.jumlah}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </Inner>
+      </div>
+    </Chapter>
+  );
+}

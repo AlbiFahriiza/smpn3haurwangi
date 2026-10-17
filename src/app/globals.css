@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta);
+  --font-sans: var(--font-grotesk);
   --font-serif: var(--font-source-serif);
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -52,6 +52,7 @@
   --color-ink: var(--ink);
   --color-slate-ink: var(--slate-ink);
   --color-line: var(--line);
+  --font-display: var(--font-grotesk);
 }
 
 :root {
@@ -173,3 +174,250 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Arah "Colour chapters" — dipakai di beranda.
+   Setiap bab adalah satu bidang warna datar dari palet brand: tanpa gradasi,
+   tanpa garis pemisah. Tepi keras tempat dua bidang bertemu itulah tampilannya.
+   ========================================================================== */
+
+:root {
+  /* Lima langkah tipe, tidak lebih. */
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-statement: clamp(1.375rem, 1.1rem + 1.1vw, 2.125rem);
+  --step-head: clamp(2.25rem, 1.6rem + 2.6vw, 4rem);
+  --step-hero: clamp(3.5rem, 9.5vw, 9.375rem);
+
+  /* Bidang warna bab (semuanya dari palet brand). */
+  --field-foam: oklch(0.984 0.005 247.9);
+  --field-sky: oklch(0.939 0.022 243.8);
+  --field-line: oklch(0.885 0.03 243.4);
+  --field-marine: oklch(0.474 0.141 253);
+  --field-ink: oklch(0.272 0.044 252.1);
+  --field-abyss: oklch(0.298 0.076 252.5);
+  --field-deep: oklch(0.248 0.066 255.6);
+
+  /* Tinta untuk tiap bidang. Rasio kontras dijaga di atas 4,5:1. */
+  --on-light: oklch(0.272 0.044 252.1);
+  --on-light-soft: oklch(0.44 0.052 250);
+  --on-dark: oklch(0.985 0.005 247.9);
+  --on-dark-soft: oklch(0.88 0.028 245);
+
+  /* Dua kemudahan yang jadi tanda tangan project. */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@layer components {
+  .t-small {
+    font-size: var(--step-small);
+    line-height: 1.45;
+  }
+  .t-body {
+    font-size: var(--step-body);
+    line-height: 1.55;
+  }
+  .t-statement {
+    font-size: var(--step-statement);
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+  }
+  .t-head {
+    font-size: var(--step-head);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+  }
+  .t-hero {
+    font-size: var(--step-hero);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+    font-weight: 800;
+    font-kerning: none;
+  }
+  /* Satu pasang margin halaman dipakai di seluruh bab. */
+  .chapter-inner {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 90rem;
+    padding-inline: clamp(1.25rem, 4.5vw, 4.5rem);
+  }
+}
+
+/* Satu bangunan halaman punya tinggi navigasi yang pasti, dipakai juga oleh
+   bab pembuka untuk naik ke bawahnya. */
+:root {
+  --nav-h: 4.5rem;
+}
+
+/* ---------------------------------------------------------------- bidang bab */
+/* Judul bab punya tempat sendiri saat jadi sasaran tautan, karena navigasi
+   menempel di atas layar. */
+[data-nav] {
+  scroll-margin-top: 5rem;
+}
+
+[data-field] {
+  background-color: var(--chapter-bg);
+  color: var(--chapter-fg);
+}
+[data-field="foam"] {
+  --chapter-bg: var(--field-foam);
+  --chapter-fg: var(--on-light);
+  --chapter-muted: var(--on-light-soft);
+  --chapter-accent: var(--field-marine);
+}
+[data-field="sky"] {
+  --chapter-bg: var(--field-sky);
+  --chapter-fg: var(--on-light);
+  --chapter-muted: var(--on-light-soft);
+  --chapter-accent: var(--field-marine);
+}
+[data-field="marine"] {
+  --chapter-bg: var(--field-marine);
+  --chapter-fg: var(--on-dark);
+  --chapter-muted: var(--on-dark-soft);
+  --chapter-accent: var(--field-foam);
+}
+[data-field="ink"] {
+  --chapter-bg: var(--field-ink);
+  --chapter-fg: var(--on-dark);
+  --chapter-muted: var(--on-dark-soft);
+  --chapter-accent: var(--field-foam);
+}
+[data-field="abyss"] {
+  --chapter-bg: var(--field-abyss);
+  --chapter-fg: var(--on-dark);
+  --chapter-muted: var(--on-dark-soft);
+  --chapter-accent: var(--field-foam);
+}
+[data-field="deep"] {
+  --chapter-bg: var(--field-deep);
+  --chapter-fg: var(--on-dark);
+  --chapter-muted: var(--on-dark-soft);
+  --chapter-accent: var(--field-foam);
+}
+.field-soft {
+  color: var(--chapter-muted);
+}
+
+/* ------------------------------------------------------------------- fokus --
+   Penanda fokus keyboard yang seragam dan terlihat di semua bidang warna.
+   Tanpa ini, penanda bawaan peramban bisa nyaris tak terlihat di atas bidang
+   gelap. */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* -------------------------------------------------------------------- hero --
+   Dua bidang datar bertemu tepat di tengah layar. Judul berdiri di atas garis
+   itu: baris pertama tercetak di bidang terang, baris kedua tenggelam di bidang
+   gelap. Karena baris kedua sewarna bidang terang, ia baru muncul saat bidang
+   biru naik melewatinya. */
+.hero {
+  position: relative;
+  min-height: 130svh;
+  isolation: isolate;
+  /* Bab pembuka naik sampai ke bawah batang navigasi supaya garis tengahnya
+     jatuh tepat di tengah layar, bukan tergeser setinggi navigasi. */
+  margin-top: calc(-1 * var(--nav-h));
+}
+.hero-fields {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-field-top {
+  height: 50svh;
+  background: var(--field-foam);
+}
+.hero-field-bottom {
+  height: calc(100% - 50svh);
+  background: var(--field-abyss);
+  transform-origin: bottom center;
+}
+.hero-stage {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 100svh;
+  z-index: 1;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding-inline: clamp(1rem, 4vw, 4rem);
+}
+.hero-title {
+  text-align: center;
+  /* Jarak baris dilonggarkan dari 0,86 ke 1,18 supaya tinta dua baris tidak
+     tumpang tindih — dengan begitu garis tengah layar jatuh di celah antar
+     baris, bukan memotong huruf. Judul dibiarkan terpusat apa adanya: kalau
+     blok ini digeser dengan transform, animasi masuk GSAP (yPercent) menulis
+     transform inline dan menghapus geserannya. */
+  line-height: 1.18;
+  /* Judul digeser sedikit ke atas supaya garis tengah layar jatuh di tengah
+     celah antar baris. Geseran ini pakai margin, bukan transform, karena animasi
+     masuk GSAP menulis transform inline dan akan menghapusnya. Karena blok ini
+     dipusatkan, geseran sebenarnya hanya setengah nilai margin. */
+  margin-top: -0.14em;
+}
+.hero-title-line {
+  display: block;
+}
+/* Baris pertama sewarna tinta di bidang terang, baris kedua sewarna bidang biru
+   — jadi baris kedua muncul saat bidang biru naik melewatinya. */
+.hero-title-top {
+  color: var(--on-light);
+}
+.hero-title-bottom {
+  color: var(--on-dark);
+}
+/* Di layar ponsel judul turun satu ukuran supaya "SMP Negeri 3" tetap satu
+   baris dan judul tidak pecah jadi tiga baris. */
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(2.25rem, 12.5vw, 3rem);
+  }
+}
+.hero-note {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 56px;
+  margin-inline: auto;
+  width: min(44rem, 88vw);
+  text-align: center;
+  color: var(--on-dark-soft);
+}
+
+/* ------------------------------------------------------------------ pita ---
+   Satu baris nama yang terpotong kedua tepi layar dan bergerak perlahan. */
+.band {
+  overflow: hidden;
+}
+.band-track {
+  display: flex;
+  align-items: baseline;
+  width: max-content;
+  gap: 1.2em;
+  animation: band-move 44s linear infinite;
+  will-change: transform;
+}
+.band-track > * {
+  white-space: nowrap;
+}
+@keyframes band-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .band-track {
+    animation: none;
+  }
+}
+

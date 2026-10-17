@@ -6,8 +6,20 @@ import type { SiteContent } from "@/lib/content";
 import { TAB_TO_PATH } from "@/lib/site";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
-import { AdminPanel } from "@/components/admin/admin-panel";
-
+import {
+  ChapterThemeProvider,
+  ChapterThemeWatcher,
+  type Field,
+  type NavTheme,
+} from "@/components/motion/chapter-theme";
+import dynamic from "next/dynamic";
+// Panel admin hanya dibuka lewat #admin atau tombol footer, jadi tidak perlu
+// ikut terunduh di kunjungan biasa: kode panel (beserta Firebase) dimuat saat
+// dipakai. Ini memangkas puluhan KB dari halaman publik.
+const AdminPanel = dynamic(
+  () => import("@/components/admin/admin-panel").then((m) => m.AdminPanel),
+  { ssr: false },
+);
 /**
  * Kerangka tampilan situs: header, konten halaman, footer, dan panel admin.
  *
@@ -25,6 +37,11 @@ export function SiteShell({
   const [adminOpen, setAdminOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Beranda punya bab-babnya sendiri yang membawa warna; halaman lain memakai
+  // satu bidang terang untuk seluruh isinya supaya navigasi tetap terbaca.
+  const bidang: { "data-field"?: Field; "data-nav"?: NavTheme } =
+    pathname === "/" ? {} : { "data-field": "foam", "data-nav": "light" };
 
   // Kompatibilitas tautan lama: #tab=<nama> diarahkan ke rute baru, #admin membuka panel.
   useEffect(() => {
@@ -45,26 +62,29 @@ export function SiteShell({
   }, [pathname, router]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <SiteHeader identity={content.identity} onAdmin={() => setAdminOpen(true)} />
+    <ChapterThemeProvider>
+      <ChapterThemeWatcher />
+      <div className="min-h-screen flex flex-col bg-background">
+        <SiteHeader identity={content.identity} onAdmin={() => setAdminOpen(true)} />
 
-      <main id="konten-utama" className="flex-1">
-        {children}
-      </main>
+        <main id="konten-utama" className="flex-1" {...bidang}>
+          {children}
+        </main>
 
-      <SiteFooter
-        footer={content.footer}
-        identity={content.identity}
-        contact={content.contact}
-        onAdmin={() => setAdminOpen(true)}
-      />
+        <SiteFooter
+          footer={content.footer}
+          identity={content.identity}
+          contact={content.contact}
+          onAdmin={() => setAdminOpen(true)}
+        />
 
-      <AdminPanel
-        open={adminOpen}
-        onClose={() => setAdminOpen(false)}
-        content={content}
-        onSaved={() => router.refresh()}
-      />
-    </div>
+        <AdminPanel
+          open={adminOpen}
+          onClose={() => setAdminOpen(false)}
+          content={content}
+          onSaved={() => router.refresh()}
+        />
+      </div>
+    </ChapterThemeProvider>
   );
 }

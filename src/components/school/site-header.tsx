@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Identity } from "@/lib/content";
-import { NAV_ORDER, ROUTES } from "@/lib/site";
-import { Button } from "@/components/ui/button";
-import { LogIn, Menu, X } from "lucide-react";
+import { ROUTES } from "@/lib/site";
+import { useChapterTheme, type Field, type NavTheme } from "@/components/motion/chapter-theme";
 
-/** Menu utama diambil dari definisi rute agar label dan path selalu sinkron. */
-const NAV = NAV_ORDER.map((key) => ROUTES[key]);
+/** Tautan teks di batang navigasi; beranda diwakili nama sekolah di kiri. */
+const LINKS = [ROUTES.tentang, ROUTES.ekskul, ROUTES.galeri];
+
+/** Warna batang navigasi selalu sama dengan warna bab yang sedang lewat. */
+const BAR: Record<Field, string> = {
+  foam: "bg-foam text-ink",
+  sky: "bg-sky text-ink",
+  marine: "bg-marine text-white",
+  ink: "bg-ink text-white",
+  abyss: "bg-abyss text-white",
+  deep: "bg-deep text-white",
+};
+
+const ACTION: Record<NavTheme, string> = {
+  light: "bg-marine text-white hover:bg-marine-hover",
+  dark: "bg-foam text-ink hover:bg-white",
+};
 
 export function SiteHeader({
   identity,
@@ -20,157 +33,136 @@ export function SiteHeader({
   onAdmin: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { ink, field } = useChapterTheme();
   const pathname = usePathname();
   const nama = identity?.nama ?? "SMP Negeri 3 Haurwangi";
-  const npsn = identity?.npsn ?? "20252209";
-  const akreditasi = identity?.akreditasi ?? "Terakreditasi B";
+
+  // Panel seluler menutupi seluruh layar: kunci gulir latar dan izinkan tutup
+  // dengan Escape supaya pengguna papan tombol tidak terjebak di dalamnya.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    const gulirSebelumnya = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = gulirSebelumnya;
+    };
+  }, [menuOpen]);
 
   const isActive = (path: string) =>
     path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 
   return (
-    <header className="sticky top-0 z-40">
-      {/* Bar identitas: informasi resmi sekolah, bukan dekorasi */}
-      <div className="bg-abyss text-white/85">
-        <div className="mx-auto max-w-6xl px-4 flex items-center justify-between h-8 text-[11px] md:text-xs font-medium tracking-wide">
-          <p className="truncate">
-            NPSN {npsn}
-            <span className="mx-2 text-white/40" aria-hidden>
-              |
-            </span>
-            {akreditasi}
-          </p>
-          <p className="hidden sm:block truncate">
-            {identity?.penyelenggaraan ?? "Sekolah Sehari Penuh, Senin sampai Jumat"}
-          </p>
-        </div>
-      </div>
+    <header
+      className={`sticky top-0 z-40 transition-[background-color,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${BAR[field]}`}
+    >
+      <div className="chapter-inner">
+        <div className="flex h-[var(--nav-h)] items-center justify-between gap-2 md:gap-4">
+          <Link
+            href="/"
+            className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+          >
+            {/* Di layar ponsel nama panjang dipendekkan supaya baris navigasi
+                tetap satu baris bersama tautan aksi. Nama resminya penuh di
+                judul beranda, di footer, dan di metadata halaman. */}
+            <span className="sm:hidden">SMPN 3 Haurwangi</span>
+            <span className="hidden sm:inline">{nama}</span>
+          </Link>
 
-      {/* Navigasi utama */}
-      <div className="bg-white/95 backdrop-blur border-b border-line">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex items-center justify-between gap-3 h-16 md:h-[68px]">
+          <nav aria-label="Navigasi utama" className="hidden items-center gap-8 md:flex">
+            {LINKS.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                aria-current={isActive(item.path) ? "page" : undefined}
+                className={`t-small font-semibold transition-opacity hover:opacity-100 hover:underline hover:underline-offset-4 ${
+                  isActive(item.path) ? "opacity-100" : "opacity-90"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-2 md:gap-3">
             <Link
-              href="/"
-              className="flex items-center gap-3 text-left rounded-md focus-visible:outline-2 focus-visible:outline-marine min-w-0"
-              aria-label={`${nama}, kembali ke beranda`}
+              href={ROUTES.kontak.path}
+              className={`t-small max-[359px]:hidden px-3.5 py-3 font-semibold transition-colors md:px-5 ${ACTION[ink]}`}
             >
-              <span className="shrink-0 grid place-items-center w-11 h-11 rounded-lg bg-sky">
-                <Image
-                  src="/images/logo.png"
-                  alt={`Logo ${nama}`}
-                  width={40}
-                  height={40}
-                  className="w-8 h-8 object-contain"
-                  priority
-                />
-              </span>
-              <span className="min-w-0 hidden sm:block">
-                <span className="block font-extrabold text-abyss text-sm md:text-base leading-tight tracking-tight truncate">
-                  {nama}
-                </span>
-                <span className="block text-[11px] md:text-xs text-slate-ink truncate">
-                  {identity?.kabupaten ?? "Kabupaten Cianjur"}
-                  {identity?.provinsi
-                    ? `, ${identity.provinsi.replace("Provinsi ", "")}`
-                    : ", Jawa Barat"}
-                </span>
-              </span>
+              <span className="md:hidden">Hubungi</span>
+              <span className="hidden md:inline">Hubungi sekolah</span>
             </Link>
-
-            <nav aria-label="Navigasi utama" className="hidden md:block">
-              <ul className="flex items-center gap-1">
-                {NAV.map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path}
-                        aria-current={active ? "page" : undefined}
-                        className={`relative inline-block px-3 lg:px-4 py-2 text-sm font-semibold rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-marine ${
-                          active
-                            ? "text-marine bg-sky"
-                            : "text-ink/75 hover:text-marine hover:bg-sky/60"
-                        }`}
-                      >
-                        {item.label}
-                        {active && (
-                          <span
-                            aria-hidden
-                            className="absolute left-3 right-3 -bottom-[9px] h-0.5 bg-marine rounded-full"
-                          />
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                size="sm"
-                className="hidden md:inline-flex bg-marine hover:bg-marine-hover text-white font-semibold"
-              >
-                <Link href={ROUTES.kontak.path}>Hubungi Sekolah</Link>
-              </Button>
-              <button
-                onClick={onAdmin}
-                className="hidden md:grid place-items-center w-9 h-9 rounded-md text-slate-ink hover:text-marine hover:bg-sky/60 transition-colors focus-visible:outline-2 focus-visible:outline-marine"
-                aria-label="Masuk panel admin sekolah"
-              >
-                <LogIn className="w-4 h-4" aria-hidden />
-              </button>
-              <button
-                className="md:hidden grid place-items-center w-10 h-10 rounded-md text-abyss hover:bg-sky/60 transition-colors focus-visible:outline-2 focus-visible:outline-marine"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-expanded={menuOpen}
-                aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
-              >
-                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              aria-expanded={menuOpen}
+              aria-controls="menu-seluler"
+              className={`t-small px-3 py-3 font-semibold md:hidden ${
+                menuOpen ? "bg-white text-ink" : ""
+              }`}
+            >
+              {menuOpen ? "Tutup" : "Menu"}
+            </button>
           </div>
         </div>
       </div>
 
       {menuOpen && (
-        <nav
-          aria-label="Navigasi seluler"
-          className="md:hidden border-b border-line bg-white"
+        <div
+          id="menu-seluler"
+          className={`fixed inset-0 z-50 flex flex-col md:hidden ${BAR[field]}`}
         >
-          <ul className="mx-auto max-w-6xl px-4 py-3 space-y-1">
-            {NAV.map((item) => (
-              <li key={item.path}>
-                <Link
-                  href={item.path}
-                  onClick={() => setMenuOpen(false)}
-                  aria-current={isActive(item.path) ? "page" : undefined}
-                  className={`block w-full px-4 py-3 rounded-md font-semibold ${
-                    isActive(item.path)
-                      ? "text-marine bg-sky"
-                      : "text-ink/80 hover:bg-sky/60"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-            <li className="pt-2 border-t border-line">
+          <div className="chapter-inner">
+            <div className="flex h-[var(--nav-h)] items-center justify-between gap-3">
+              <span className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight">
+                {nama}
+              </span>
               <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  onAdmin();
-                }}
-                className="w-full text-left px-4 py-3 rounded-md font-semibold text-slate-ink hover:bg-sky/60 flex items-center gap-2"
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="t-small bg-white px-3 py-3 font-semibold text-ink"
               >
-                <LogIn className="w-4 h-4" aria-hidden />
-                Login Admin
+                Tutup
               </button>
-            </li>
-          </ul>
-        </nav>
+            </div>
+          </div>
+
+          <nav aria-label="Navigasi seluler" className="chapter-inner mt-6 flex-1">
+            <ul className="space-y-1">
+              {[...LINKS, ROUTES.kontak].map((item) => (
+                <li key={item.path}>
+                  <Link
+                    href={item.path}
+                    onClick={() => setMenuOpen(false)}
+                    aria-current={isActive(item.path) ? "page" : undefined}
+                    className={`t-statement block py-3 font-semibold ${
+                      isActive(item.path) ? "" : "opacity-90"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="chapter-inner pb-8">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onAdmin();
+              }}
+              className="t-small font-semibold opacity-90 underline underline-offset-4"
+            >
+              Masuk pengelola sekolah
+            </button>
+          </div>
+        </div>
       )}
     </header>
   );
