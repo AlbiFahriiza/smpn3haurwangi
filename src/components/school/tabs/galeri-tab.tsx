@@ -100,6 +100,9 @@ export function GaleriTab({ content }: { content: Partial<GaleriTabContent> }) {
                       alt={item.judul}
                       fill
                       sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                      // Dua foto pertama ada di layar pertama: dimuat lebih awal
+                      // supaya Largest Contentful Paint tidak tertunda.
+                      priority={i < 2}
                       className="object-cover group-hover:scale-[1.04] transition-transform duration-300"
                     />
                   </span>
