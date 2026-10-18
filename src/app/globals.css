@@ -252,6 +252,65 @@
    bab pembuka untuk naik ke bawahnya. */
 :root {
   --nav-h: 4.5rem;
+  /* Tinggi bidang warna navigasi. Menyusut saat halaman digulir, sementara
+     tinggi yang dipesan batang di dalam halaman (--nav-h) tetap, supaya tata
+     letak tidak pernah bergeser di tengah gulir. */
+  --nav-band: 4.5rem;
+}
+
+/* --------------------------------------------------------------- navigasi --
+   Bidang warna batang digambar oleh .nav-band: satu-satunya permukaan kaca di
+   situs ini, dan hanya menyala saat halaman digulir. Warnanya tetap warna bab
+   yang sedang lewat, cuma jadi tembus pandang dan mengaburkan isi halaman di
+   belakangnya. Di layar kecil batang dibiarkan pekat dan tanpa kaca. */
+[data-nav-field="foam"] {
+  --nav-solid: var(--field-foam);
+  --nav-tint: color-mix(in oklab, var(--field-foam) 92%, transparent);
+}
+[data-nav-field="sky"] {
+  --nav-solid: var(--field-sky);
+  --nav-tint: color-mix(in oklab, var(--field-sky) 92%, transparent);
+}
+[data-nav-field="marine"] {
+  --nav-solid: var(--field-marine);
+  --nav-tint: color-mix(in oklab, var(--field-marine) 92%, transparent);
+}
+[data-nav-field="ink"] {
+  --nav-solid: var(--field-ink);
+  --nav-tint: color-mix(in oklab, var(--field-ink) 92%, transparent);
+}
+[data-nav-field="abyss"] {
+  --nav-solid: var(--field-abyss);
+  --nav-tint: color-mix(in oklab, var(--field-abyss) 92%, transparent);
+}
+[data-nav-field="deep"] {
+  --nav-solid: var(--field-deep);
+  --nav-tint: color-mix(in oklab, var(--field-deep) 92%, transparent);
+}
+
+.nav-band {
+  background-color: var(--nav-solid);
+}
+
+@media (min-width: 768px) {
+  .nav-band {
+    backdrop-filter: blur(0px) saturate(1);
+    /* Warnanya berpindah seketika mengikuti bab (tepi keras, tanpa cross-fade);
+       hanya lapisan kacanya yang menyala perlahan. */
+    transition: backdrop-filter 620ms var(--ease-smooth);
+  }
+  /* Saat menyusut, warna pekat batang berganti versi tembus pandang dan
+     lapisan kacanya menyala. */
+  [data-nav-bar][data-condensed="true"] .nav-band {
+    background-color: var(--nav-tint);
+    backdrop-filter: blur(22px) saturate(1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-band {
+    transition: none;
+  }
 }
 
 /* ---------------------------------------------------------------- bidang bab */
