@@ -41,12 +41,6 @@ const ACTION: Record<NavTheme, string> = {
   dark: "bg-foam text-ink hover:bg-white",
 };
 
-/** Lencana logo: kotak putih di bidang terang, kotak foam di bidang gelap. */
-const BADGE: Record<NavTheme, string> = {
-  light: "bg-white outline outline-1 -outline-offset-1 outline-line",
-  dark: "bg-foam",
-};
-
 /** Garis rambut kotak tombol menu seluler: satu kelas per tema batang. */
 const MENU: Record<NavTheme, string> = {
   light: "outline-line",
@@ -324,32 +318,27 @@ export function SiteHeader({
               ref={markRef}
               href="/"
               aria-label={nama}
-              className="origin-left flex min-w-0 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current md:gap-3"
+              className="origin-left flex min-w-0 items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
             >
-              {/* Lencana logo sekolah: satu-satunya permukaan kecil di batang,
-                  bentuknya kotak datar sewarna bidang terang. */}
-              <span
-                className={`flex size-8 shrink-0 items-center justify-center md:size-10 ${BADGE[ink]}`}
-              >
-                <Image
-                  src="/images/logo.png"
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="h-6 w-6 object-contain md:h-8 md:w-8"
-                />
-              </span>
+              {/* Logo sekolah tampil mentah: berkas PNG-nya memang berlatar
+                  transparan, jadi tidak dibungkus kotak apa pun — warna azure
+                  dan elemen terangnya tetap terbaca di bidang bab terang
+                  maupun gelap. */}
+              <Image
+                src="/images/logo.png"
+                alt=""
+                width={44}
+                height={44}
+                className="h-9 w-9 shrink-0 object-contain md:h-10 md:w-10 lg:h-11 lg:w-11"
+              />
               <span className="min-w-0 whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight">
-                {/* Nama dipendekkan tiga tingkat: paling pendek di ponsel,
-                    sedang di tablet, penuh mulai layar lebar (lg) — supaya
-                    baris navigasi tidak pernah pecah baris dan tidak memaksa
-                    tautan bab ikut menyusut. Batas tingkat memakai breakpoint
-                    bernama (bukan arbitrary) supaya urutan kelasnya di CSS
-                    stabil dan tidak ada dua tingkat tampil bersamaan. Nama
-                    resminya tetap penuh di judul beranda, di panel menu, di
-                    footer, dan di metadata halaman. */}
-                <span className="sm:hidden">SMPN 3</span>
-                <span className="hidden sm:inline lg:hidden">SMPN 3 Haurwangi</span>
+                {/* Dua tingkat nama: "SMPN 3 Haurwangi" di semua layar
+                    sempit sampai di bawah lg, nama resmi penuh mulai lg.
+                    Tidak ada lagi versi terpendek "SMPN 3" — identitas
+                    sekolah tetap utuh di ponsel, dan ruangnya cukup karena
+                    tombol Hubungi hanya tampil mulai sm. Nama penuh juga
+                    hadir di panel menu, footer, dan metadata halaman. */}
+                <span className="lg:hidden">SMPN 3 Haurwangi</span>
                 <span className="hidden lg:inline">{nama}</span>
               </span>
             </Link>
@@ -400,7 +389,7 @@ export function SiteHeader({
                 <Link
                   ref={aksiRef}
                   href={ROUTES.kontak.path}
-                  className={`t-small max-[359px]:hidden px-3.5 py-3 font-semibold transition-colors md:px-4 lg:px-5 ${ACTION[ink]}`}
+                  className={`t-small hidden px-3.5 py-3 font-semibold transition-colors sm:block md:px-4 lg:px-5 ${ACTION[ink]}`}
                 >
                   <span className="lg:hidden">Hubungi</span>
                   <span className="hidden lg:inline">Hubungi sekolah</span>
@@ -436,15 +425,13 @@ export function SiteHeader({
         <div className="chapter-inner">
           <div className="flex h-[var(--nav-h)] items-center justify-between gap-3">
             <span className="flex min-w-0 items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center bg-foam">
-                <Image
-                  src="/images/logo.png"
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="h-7 w-7 object-contain"
-                />
-              </span>
+              <Image
+                src="/images/logo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 shrink-0 object-contain"
+              />
               <span
                 data-menu-item
                 className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight"
