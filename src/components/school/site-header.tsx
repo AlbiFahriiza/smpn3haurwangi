@@ -1,12 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
-import type { Identity } from "@/lib/content";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type { ContactSection, Identity } from "@/lib/content";
 import { ROUTES } from "@/lib/site";
 import { useChapterTheme, type Field, type NavTheme } from "@/components/motion/chapter-theme";
+
+gsap.registerPlugin(ScrollTrigger);
 
 /** Tautan teks di batang navigasi; beranda diwakili nama sekolah di kiri. */
 const LINKS = [ROUTES.tentang, ROUTES.ekskul, ROUTES.galeri];
@@ -37,11 +41,19 @@ const ACTION: Record<NavTheme, string> = {
   dark: "bg-foam text-ink hover:bg-white",
 };
 
+/** Lencana logo: kotak putih di bidang terang, kotak foam di bidang gelap. */
+const BADGE: Record<NavTheme, string> = {
+  light: "bg-white outline outline-1 -outline-offset-1 outline-line",
+  dark: "bg-foam",
+};
+
 export function SiteHeader({
   identity,
+  contact,
   onAdmin,
 }: {
   identity?: Identity;
+  contact?: ContactSection;
   onAdmin: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,6 +72,7 @@ export function SiteHeader({
   const blockRef = useRef<HTMLSpanElement>(null);
   const linkRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const menuRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   // Panel seluler menutupi seluruh layar: kunci gulir latar dan izinkan tutup
   // dengan Escape supaya pengguna papan tombol tidak terjebak di dalamnya.
@@ -76,6 +89,27 @@ export function SiteHeader({
       document.body.style.overflow = gulirSebelumnya;
     };
   }, [menuOpen]);
+
+  // Garis tipis di kaki batang menunjukkan sejauh mana halaman sudah dibaca.
+  // Digerakkan oleh guliran sendiri (scrub), jadi aman untuk pengguna yang
+  // meminta gerak minimal: ia tidak pernah bergerak sendiri.
+  useEffect(() => {
+    const progress = progressRef.current;
+    if (!progress) return;
+    const tween = gsap.fromTo(
+      progress,
+      { scaleX: 0 },
+      {
+        scaleX: 1,
+        ease: "none",
+        scrollTrigger: { start: 0, end: "max", scrub: 0.6 },
+      },
+    );
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  }, []);
 
   // Keadaan gulir dibaca sekali per bingkai saja supaya gulir tetap mulus.
   useEffect(() => {
@@ -280,13 +314,30 @@ export function SiteHeader({
             <Link
               ref={markRef}
               href="/"
-              className="origin-left whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+              aria-label={nama}
+              className="origin-left flex min-w-0 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current md:gap-3"
             >
-              {/* Di layar ponsel nama panjang dipendekkan supaya baris navigasi
-                  tetap satu baris bersama tautan aksi. Nama resminya penuh di
-                  judul beranda, di footer, dan di metadata halaman. */}
-              <span className="sm:hidden">SMPN 3 Haurwangi</span>
-              <span className="hidden sm:inline">{nama}</span>
+              {/* Lencana logo sekolah: satu-satunya permukaan kecil di batang,
+                  bentuknya kotak datar sewarna bidang terang. */}
+              <span
+                className={`flex size-8 shrink-0 items-center justify-center md:size-10 ${BADGE[ink]}`}
+              >
+                <Image
+                  src="/images/logo.png"
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="h-6 w-6 object-contain md:h-8 md:w-8"
+                />
+              </span>
+              <span className="min-w-0 whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight">
+                {/* Di layar ponsel nama dipendekkan dua tingkat supaya baris
+                    navigasi tetap satu baris sampai lebar 320px; nama resminya
+                    penuh di judul beranda, di panel menu, di footer, dan di
+                    metadata halaman. */}
+                <span className="sm:hidden">SMPN 3</span>
+                <span className="hidden sm:inline">{nama}</span>
+              </span>
             </Link>
 
             <nav
@@ -349,6 +400,8 @@ export function SiteHeader({
             </div>
           </div>
         </div>
+        {/* Garis kemajuan baca; warnanya ikut bidang bab (lihat globals.css). */}
+        <div ref={progressRef} aria-hidden className="nav-progress" />
       </div>
 
       {/* Panel seluler selalu ada di dalam dokumen supaya bisa dianimasikan
@@ -362,11 +415,22 @@ export function SiteHeader({
       >
         <div className="chapter-inner">
           <div className="flex h-[var(--nav-h)] items-center justify-between gap-3">
-            <span
-              data-menu-item
-              className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight"
-            >
-              {nama}
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center bg-foam">
+                <Image
+                  src="/images/logo.png"
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="h-7 w-7 object-contain"
+                />
+              </span>
+              <span
+                data-menu-item
+                className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight"
+              >
+                {nama}
+              </span>
             </span>
             <button
               type="button"
@@ -387,25 +451,35 @@ export function SiteHeader({
                   href={item.path}
                   onClick={() => setMenuOpen(false)}
                   aria-current={isActive(item.path) ? "page" : undefined}
-                  className={`t-statement block py-3 font-semibold ${
+                  className={`t-statement flex items-baseline justify-between gap-4 py-3 font-semibold transition-opacity hover:opacity-80 ${
                     isActive(item.path) ? "" : "opacity-90"
                   }`}
                 >
                   {item.label}
+                  <span aria-hidden className="t-body opacity-60">
+                    →
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
 
+        {/* Fakta layanan di dasar panel supaya panel seluler bukan sekadar
+            daftar tautan: pengunjung ponsel paling sering mencari dua hal ini. */}
         <div className="chapter-inner pb-8">
+          <div data-menu-item className="t-small space-y-1 opacity-80">
+            <p className="font-semibold">{contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB"}</p>
+            <p className="opacity-90">{contact?.alamat ?? identity?.alamat ?? "Jalan Buniayu, Desa Kertamukti, Kec. Haurwangi, Kab. Cianjur"}</p>
+          </div>
           <button
             type="button"
+            data-menu-item
             onClick={() => {
               setMenuOpen(false);
               onAdmin();
             }}
-            className="t-small font-semibold opacity-90 underline underline-offset-4"
+            className="t-small mt-6 font-semibold opacity-90 underline underline-offset-4"
           >
             Masuk pengelola sekolah
           </button>

@@ -30,6 +30,15 @@ export function HeroChapter({
   const total = students?.total ?? 382;
   const rombel = students?.rombel ?? 12;
 
+  /** Baris fakta resmi di kaki hero: data identitas sekolah apa adanya,
+   * tanpa angka rekaan. Bentuknya tipografis dengan garis rambut, bukan kartu. */
+  const meta: Array<[string, string]> = [
+    ["NPSN", identity?.npsn ?? "20252209"],
+    ["Akreditasi", akreditasi],
+    ["Kurikulum", identity?.kurikulum ?? "Kurikulum Merdeka"],
+    ["Jenis", identity?.penyelenggaraan ?? "Sehari Penuh / 5 Hari"],
+  ];
+
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -49,7 +58,9 @@ export function HeroChapter({
   return (
     <section ref={scope} data-nav="light" aria-labelledby="hero-title" className="hero">
       <div className="hero-fields" aria-hidden="true">
-        <div className="hero-field-top" />
+        {/* Tekstur grid institusional di bidang terang: garis tipis 1px yang
+            menegaskan bahasa rupa kelembagaan, bukan dekorasi acak. */}
+        <div className="hero-field-top bg-civic-grid" />
         <div className="hero-field-bottom" data-hero-field />
       </div>
 
@@ -60,9 +71,24 @@ export function HeroChapter({
         </h1>
 
         <p data-hero-note className="hero-note t-body">
-          Sekolah {status} terakreditasi {akreditasi} di {alamat} — {total} siswa dalam {rombel}{" "}
+          Sekolah {status} terakreditasi {akreditasi} di {alamat}. {total} siswa dalam {rombel}{" "}
           rombongan belajar.
         </p>
+      </div>
+
+      {/* Baris identitas resmi: satu baris fakta yang bisa dipindai mata
+          sebelum pengunjung mulai menggulir. Di layar paling sempit dua item
+          terakhir disembunyikan (datanya tetap utuh di footer). */}
+      <div className="hero-meta" aria-label="Identitas sekolah">
+        {meta.map(([label, nilai], index) => (
+          <p
+            key={label}
+            className={`hero-meta-item ${index >= 2 ? "hidden sm:flex" : ""}`}
+          >
+            <span className="hero-meta-label">{label}</span>{" "}
+            <span className="hero-meta-value">{nilai}</span>
+          </p>
+        ))}
       </div>
 
       <span className="sr-only">{nama}</span>

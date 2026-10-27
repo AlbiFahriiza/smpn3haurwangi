@@ -65,10 +65,13 @@ export function BeritaChapter({ berita }: { berita?: HomeSection["berita"] }) {
               <h3 data-reveal-item className="t-statement">
                 {utama.title}
               </h3>
-              <p data-reveal-item className="t-small field-soft mt-2 tabular-nums">
+              <p
+                data-reveal-item
+                className="t-small tabular-nums mt-4 inline-flex items-baseline gap-2 px-3 py-1.5 bg-white font-semibold"
+              >
                 {utama.date}
               </p>
-              <p data-reveal-item className="t-body field-soft mt-3">
+              <p data-reveal-item className="t-body field-soft mt-4">
                 {utama.excerpt}
               </p>
             </Reveal>
@@ -97,7 +100,7 @@ export function BeritaChapter({ berita }: { berita?: HomeSection["berita"] }) {
                     <h3 className="t-statement">{item.title}</h3>
                     <p className="t-body field-soft mt-1">{item.excerpt}</p>
                   </div>
-                  <p className="t-small field-soft col-start-2 tabular-nums md:col-start-3">
+                  <p className="t-small tabular-nums col-start-2 justify-self-start px-3 py-1.5 bg-white font-semibold md:col-start-3 md:justify-self-end">
                     {item.date}
                   </p>
                 </li>

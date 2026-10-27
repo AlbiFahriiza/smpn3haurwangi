@@ -217,8 +217,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
               </p>
 
               <form data-reveal-item onSubmit={kirim} className="mt-8 space-y-6">
-                <div>
-                  <label htmlFor="pesan-nama" className="t-small field-soft">
+                <div className="form-field">
+                  <label htmlFor="pesan-nama" className="t-small">
                     Nama
                   </label>
                   <input
@@ -230,8 +230,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                     className="t-body mt-2 w-full bg-white px-4 py-3 text-ink placeholder:text-ink/70"
                   />
                 </div>
-                <div>
-                  <label htmlFor="pesan-isi" className="t-small field-soft">
+                <div className="form-field">
+                  <label htmlFor="pesan-isi" className="t-small">
                     Pesan
                   </label>
                   <textarea
@@ -245,7 +245,7 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                 </div>
                 <button
                   type="submit"
-                  className="t-body bg-abyss px-7 py-4 font-semibold text-white transition-colors hover:bg-deep"
+                  className="t-body bg-abyss px-7 py-4 font-semibold text-white transition-[background-color,translate] duration-200 hover:bg-deep active:translate-y-px"
                 >
                   {terkirim ? "Buka aplikasi surel" : "Kirim pesan"}
                 </button>

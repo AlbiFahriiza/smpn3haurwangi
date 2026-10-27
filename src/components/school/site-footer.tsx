@@ -36,6 +36,14 @@ export function SiteFooter({
   const [barisPertama, ...rest] = nama.split(" ");
   const barisKedua = rest.join(" ");
 
+  // Gulir ke atas lewat Lenis kalau ada, supaya tidak bergulat dengan gulir
+  // bawaan peramban; di ponsel cukup gulir mulus bawaan.
+  const keAtas = () => {
+    const lenis = window.__lenis;
+    if (lenis) lenis.scrollTo(0, { duration: 1.1 });
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <Chapter field="deep" nav="dark" pad="normal" className="pb-10">
       <Inner>
@@ -135,10 +143,20 @@ export function SiteFooter({
           </div>
         </div>
 
-        <p className="t-small mt-14 max-w-[62ch] opacity-70">
-          © {new Date().getFullYear()} {nama}. {footer?.credit ?? "Dikelola Tim Media Sekolah"}.
-          Data sinkron Dapodik semester 2026/2027.
-        </p>
+        <div className="mt-14 flex flex-wrap items-end justify-between gap-6">
+          <p className="t-small max-w-[62ch] opacity-70">
+            © {new Date().getFullYear()} {nama}. {footer?.credit ?? "Dikelola Tim Media Sekolah"}.
+            Data sinkron Dapodik semester 2026/2027.
+          </p>
+          <button
+            type="button"
+            onClick={keAtas}
+            className="t-small inline-flex shrink-0 items-center gap-2 font-semibold underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
+          >
+            Kembali ke atas
+            <span aria-hidden>↑</span>
+          </button>
+        </div>
       </Inner>
     </Chapter>
   );

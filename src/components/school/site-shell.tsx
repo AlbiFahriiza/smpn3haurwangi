@@ -62,10 +62,16 @@ export function SiteShell({
   return (
     <ChapterThemeProvider initial={bidangAwal}>
       <ChapterThemeWatcher />
+      <a href="#konten-utama" className="skip-link t-small">
+        Lewati ke konten utama
+      </a>
       <div className="min-h-screen flex flex-col bg-background">
-        <SiteHeader identity={content.identity} onAdmin={() => setAdminOpen(true)} />
+        <SiteHeader identity={content.identity} contact={content.contact} onAdmin={() => setAdminOpen(true)} />
 
-        <main id="konten-utama" className="flex-1">
+        {/* tabIndex -1 supaya tautan "lewati ke konten" bisa memindahkan fokus
+            papan tombol ke sini; elemen tanpa tabindex tidak bisa menerima fokus
+            programatik. */}
+        <main id="konten-utama" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}
         </main>
 

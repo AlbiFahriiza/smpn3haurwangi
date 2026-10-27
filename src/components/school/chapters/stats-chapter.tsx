@@ -1,14 +1,24 @@
 "use client";
 
+import { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import type { HomeStat } from "@/lib/content";
 import { Chapter, Inner } from "./chapter";
 import { Reveal } from "@/components/motion/reveal";
+
+const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
 
 const FALLBACK: HomeStat[] = [
   { label: "Siswa aktif", value: "382", sub: "199 putra, 183 putri" },
   { label: "Guru & tenaga kependidikan", value: "16", sub: "93,75% bersertifikasi" },
   { label: "Rombongan belajar", value: "12", sub: "Kelas 7 sampai 9" },
 ];
+
+/** Angka murni (tanpa satuan/koma) bisa dihitung naik; selain itu ditampilkan apa adanya. */
+function angkaMurni(nilai: string): number | null {
+  return /^\d+$/.test(nilai.trim()) ? Number(nilai) : null;
+}
 
 function Tile({
   stat,
@@ -19,12 +29,15 @@ function Tile({
   tint: string;
   className?: string;
 }) {
+  const hitung = angkaMurni(stat.value);
   return (
     <div
       data-reveal-item
       className={`flex flex-col justify-center gap-3 p-7 md:justify-between md:gap-0 md:p-8 ${tint} ${className}`}
     >
-      <p className="t-hero tabular-nums">{stat.value}</p>
+      <p className="t-hero tabular-nums" data-count={hitung ?? undefined}>
+        {stat.value}
+      </p>
       <p className="t-small">
         <span className="block font-semibold">{stat.label}</span>
         <span className="field-soft block">{stat.sub}</span>
@@ -36,12 +49,39 @@ function Tile({
 /**
  * Bab statistik: tiga petak berundak dengan tinggi berbeda, bukan deretan kartu
  * seragam. Satu petak memakai warna aksen penuh, dua lainnya menaik satu nada.
+ * Angkanya dihitung naik saat masuk layan (hanya bila pengguna mengizinkan gerak).
  */
 export function StatsChapter({ stats }: { stats?: HomeStat[] }) {
+  const scope = useRef<HTMLDivElement>(null);
   const items = (stats && stats.length >= 3 ? stats : FALLBACK).slice(0, 3);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        scope.current?.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
+          const target = Number(el.dataset.count);
+          if (!Number.isFinite(target) || target <= 0) return;
+          const hitung = { v: 0 };
+          gsap.to(hitung, {
+            v: target,
+            duration: 1.7,
+            ease: "expo.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+            onUpdate: () => {
+              el.textContent = Math.round(hitung.v).toLocaleString("id-ID");
+            },
+          });
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
 
   return (
     <Chapter field="deep" nav="dark" pad="tall" id="statistik-sekolah">
+      <div ref={scope}>
       <Inner>
         <Reveal y={44} stagger={0.12} start="top 86%">
           <div className="grid gap-2 md:grid-cols-12">
@@ -75,6 +115,7 @@ export function StatsChapter({ stats }: { stats?: HomeStat[] }) {
           </div>
         </Reveal>
       </Inner>
+      </div>
     </Chapter>
   );
 }

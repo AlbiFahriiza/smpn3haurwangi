@@ -147,6 +147,12 @@
     @apply bg-background text-foreground;
     font-feature-settings: "ss01" on;
   }
+  /* Tanda seleksi teks memakai aksen brand: satu momen kecil yang membuat
+     situs terasa dirancang sampai detail terakhir. */
+  ::selection {
+    background-color: var(--marine);
+    color: var(--foam);
+  }
 }
 
 @layer utilities {
@@ -266,30 +272,50 @@
 [data-nav-field="foam"] {
   --nav-solid: var(--field-foam);
   --nav-tint: color-mix(in oklab, var(--field-foam) 92%, transparent);
+  --nav-progress: var(--field-marine);
 }
 [data-nav-field="sky"] {
   --nav-solid: var(--field-sky);
   --nav-tint: color-mix(in oklab, var(--field-sky) 92%, transparent);
+  --nav-progress: var(--field-marine);
 }
 [data-nav-field="marine"] {
   --nav-solid: var(--field-marine);
   --nav-tint: color-mix(in oklab, var(--field-marine) 92%, transparent);
+  --nav-progress: var(--field-foam);
 }
 [data-nav-field="ink"] {
   --nav-solid: var(--field-ink);
   --nav-tint: color-mix(in oklab, var(--field-ink) 92%, transparent);
+  --nav-progress: var(--field-foam);
 }
 [data-nav-field="abyss"] {
   --nav-solid: var(--field-abyss);
   --nav-tint: color-mix(in oklab, var(--field-abyss) 92%, transparent);
+  --nav-progress: var(--field-foam);
 }
 [data-nav-field="deep"] {
   --nav-solid: var(--field-deep);
   --nav-tint: color-mix(in oklab, var(--field-deep) 92%, transparent);
+  --nav-progress: var(--field-foam);
 }
 
 .nav-band {
   background-color: var(--nav-solid);
+}
+
+/* Garis kemajuan baca di kaki batang: dua piksel penuh, tanpa bayangan,
+   warnanya kontras dengan bidang bab yang sedang lewat. Skalanya digerakkan
+   GSAP (transform scaleX) sehingga tidak pernah memicu reflow. */
+.nav-progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--nav-progress);
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
 }
 
 @media (min-width: 768px) {
@@ -299,17 +325,38 @@
        hanya lapisan kacanya yang menyala perlahan. */
     transition: backdrop-filter 620ms var(--ease-smooth);
   }
-  /* Saat menyusut, warna pekat batang berganti versi tembus pandang dan
-     lapisan kacanya menyala. */
+  /* Saat menyusut, warna pekat batang berganti versi tembus pandang,
+     lapisan kacanya menyala, dan satu garis rambut di kakinya memisahkan
+     kaca dari isi halaman di belakangnya. */
   [data-nav-bar][data-condensed="true"] .nav-band {
     background-color: var(--nav-tint);
     backdrop-filter: blur(22px) saturate(1.4);
+    box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--nav-solid) 72%, var(--field-ink) 28%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .nav-band {
     transition: none;
+  }
+}
+
+/* ------------------------------------------------------------ scrollbar --
+   Batang gulir tipis sewarna palet; hanya di peramban berbasis WebKit/Chromium
+   (Firefox memakai gaya bawaannya sendiri). Pasif secara visual: tidak mengubah
+   lebar area konten. */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--field-foam);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--slate-ink) 62%, var(--field-foam) 38%);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--field-marine);
   }
 }
 
@@ -451,6 +498,77 @@
   width: min(44rem, 88vw);
   text-align: center;
   color: var(--on-dark-soft);
+}
+
+/* Baris identitas resmi di kaki hero: tipografis dan dipisah garis rambut,
+   bukan deretan kartu. Nilainya pakai angka tabular biar sejajar rapi. */
+.hero-meta {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+}
+.hero-meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55em;
+  padding: 0.8rem 1.4rem;
+  border-top: 1px solid color-mix(in oklab, var(--on-dark) 22%, transparent);
+  font-size: var(--step-small);
+  line-height: 1.45;
+}
+.hero-meta-item + .hero-meta-item {
+  border-left: 1px solid color-mix(in oklab, var(--on-dark) 22%, transparent);
+}
+.hero-meta-label {
+  color: var(--on-dark-soft);
+}
+.hero-meta-value {
+  font-weight: 700;
+  color: var(--on-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ tautan lompat --
+   Tautan "lewati ke konten" bagi pengguna papan tombol: tersembunyi di luar
+   layar, muncul hanya saat menjadi sasaran fokus pertama. */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 60;
+  transform: translateY(-160%);
+  background: var(--marine);
+  color: var(--foam);
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ------------------------------------------------------------------ form --
+   Kolom isian dengan garis rambut di keadaan diam; saat fokus garisnya
+   menebal jadi aksen marine dan labelnya ikut berganti warna. */
+.form-field label {
+  color: var(--chapter-muted);
+  transition: color 180ms var(--ease-smooth);
+}
+.form-field:focus-within label {
+  color: var(--marine);
+}
+.form-field input,
+.form-field textarea {
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
+  transition: outline-color 180ms var(--ease-smooth);
+}
+.form-field input:focus-visible,
+.form-field textarea:focus-visible {
+  outline: 2px solid var(--marine);
+  outline-offset: 0;
 }
 
 /* ------------------------------------------------------------------ pita ---

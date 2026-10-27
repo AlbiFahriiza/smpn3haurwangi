@@ -8,6 +8,15 @@ import "lenis/dist/lenis.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+declare global {
+  interface Window {
+    /** Instansi Lenis aktif (null bila gulir halus tidak dinyalakan). Dipakai
+     * tombol "kembali ke atas" supaya gulirannya tetap lewat Lenis, bukan
+     * bergulat dengan gulir bawaan peramban. */
+    __lenis?: Lenis | null;
+  }
+}
+
 /**
  * Menyatukan Lenis dan ScrollTrigger pada satu jam (ticker GSAP).
  *
@@ -27,6 +36,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     const start = () => {
       if (lenis) return;
       lenis = new Lenis({ duration: 1.05, wheelMultiplier: 0.9 });
+      window.__lenis = lenis;
       lenis.on("scroll", ScrollTrigger.update);
       update = (time: number) => {
         // Ticker GSAP menghitung detik, Lenis mengharapkan milidetik.
@@ -40,6 +50,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       if (update) gsap.ticker.remove(update);
       lenis?.destroy();
       lenis = null;
+      window.__lenis = null;
       update = null;
       gsap.ticker.lagSmoothing(500, 33);
     };
