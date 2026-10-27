@@ -47,6 +47,12 @@ const BADGE: Record<NavTheme, string> = {
   dark: "bg-foam",
 };
 
+/** Garis rambut kotak tombol menu seluler: satu kelas per tema batang. */
+const MENU: Record<NavTheme, string> = {
+  light: "outline-line",
+  dark: "outline-white/40",
+};
+
 export function SiteHeader({
   identity,
   contact,
@@ -309,7 +315,10 @@ export function SiteHeader({
           isi halaman di belakangnya. Ia juga yang memegang isi batang, jadi
           warna bacaannya tetap terukur. */}
       <div className="nav-band relative h-[var(--nav-band)]">
-        <div className="chapter-inner">
+        {/* Tinggi penuh band diwariskan ke baris isi lewat kelas h-full ini;
+            tanpa itu baris hanya setinggi isinya dan menempel di atas band,
+            sehingga isi batang tampak naik dan tidak terpusat. */}
+        <div className="chapter-inner h-full">
           <div className="flex h-full items-center justify-between gap-2 md:gap-4">
             <Link
               ref={markRef}
@@ -331,72 +340,83 @@ export function SiteHeader({
                 />
               </span>
               <span className="min-w-0 whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight">
-                {/* Di layar ponsel nama dipendekkan dua tingkat supaya baris
-                    navigasi tetap satu baris sampai lebar 320px; nama resminya
-                    penuh di judul beranda, di panel menu, di footer, dan di
-                    metadata halaman. */}
+                {/* Nama dipendekkan tiga tingkat: paling pendek di ponsel,
+                    sedang di tablet, penuh mulai layar lebar (lg) — supaya
+                    baris navigasi tidak pernah pecah baris dan tidak memaksa
+                    tautan bab ikut menyusut. Batas tingkat memakai breakpoint
+                    bernama (bukan arbitrary) supaya urutan kelasnya di CSS
+                    stabil dan tidak ada dua tingkat tampil bersamaan. Nama
+                    resminya tetap penuh di judul beranda, di panel menu, di
+                    footer, dan di metadata halaman. */}
                 <span className="sm:hidden">SMPN 3</span>
-                <span className="hidden sm:inline">{nama}</span>
+                <span className="hidden sm:inline lg:hidden">SMPN 3 Haurwangi</span>
+                <span className="hidden lg:inline">{nama}</span>
               </span>
             </Link>
 
-            <nav
-              ref={navRef}
-              aria-label="Navigasi utama"
-              onPointerLeave={() => setHoverPath(null)}
-              onPointerMove={ikutiKursor}
-              className="relative hidden items-center gap-1 md:flex"
-            >
-              <span
-                ref={blockRef}
-                aria-hidden
-                className={`pointer-events-none absolute left-0 top-1/2 h-8 w-0 opacity-0 transition-colors duration-200 ${
-                  hoverPath ? BLOCK[ink].sorot : BLOCK[ink].dasar
-                }`}
-              />
-              {LINKS.map((item, index) => {
-                const tersorot = canHover && hoverPath === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    ref={(el) => {
-                      linkRefs.current[index] = el;
-                    }}
-                    aria-current={isActive(item.path) ? "page" : undefined}
-                    onPointerEnter={() => {
-                      if (canHover) setHoverPath(item.path);
-                    }}
-                    className={`t-small relative z-10 px-4 py-2 font-semibold ${
-                      tersorot ? BLOCK[ink].tinta : ""
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* Grup kanan: tautan bab dan aksi berkumpul di satu sisi
+                (DESIGN.md: logo kiri, menu + CTA kanan) supaya tidak ada
+                ruang kosong mengambang di antara nama panjang dan menu di
+                tengah batang. */}
+            <div className="flex shrink-0 items-center gap-3 md:gap-5">
+              <nav
+                ref={navRef}
+                aria-label="Navigasi utama"
+                onPointerLeave={() => setHoverPath(null)}
+                onPointerMove={ikutiKursor}
+                className="relative hidden items-center gap-1 md:flex"
+              >
+                <span
+                  ref={blockRef}
+                  aria-hidden
+                  className={`pointer-events-none absolute left-0 top-1/2 h-8 w-0 opacity-0 transition-colors duration-200 ${
+                    hoverPath ? BLOCK[ink].sorot : BLOCK[ink].dasar
+                  }`}
+                />
+                {LINKS.map((item, index) => {
+                  const tersorot = canHover && hoverPath === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      ref={(el) => {
+                        linkRefs.current[index] = el;
+                      }}
+                      aria-current={isActive(item.path) ? "page" : undefined}
+                      onPointerEnter={() => {
+                        if (canHover) setHoverPath(item.path);
+                      }}
+                      className={`t-small relative z-10 whitespace-nowrap px-4 py-2 font-semibold lg:px-5 ${
+                        tersorot ? BLOCK[ink].tinta : ""
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
 
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              <Link
-                ref={aksiRef}
-                href={ROUTES.kontak.path}
-                className={`t-small max-[359px]:hidden px-3.5 py-3 font-semibold transition-colors md:px-5 ${ACTION[ink]}`}
-              >
-                <span className="md:hidden">Hubungi</span>
-                <span className="hidden md:inline">Hubungi sekolah</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((value) => !value)}
-                aria-expanded={menuOpen}
-                aria-controls="menu-seluler"
-                className={`t-small px-3 py-3 font-semibold md:hidden ${
-                  menuOpen ? "bg-white text-ink" : ""
-                }`}
-              >
-                {menuOpen ? "Tutup" : "Menu"}
-              </button>
+              <div className="flex shrink-0 items-center gap-3">
+                <Link
+                  ref={aksiRef}
+                  href={ROUTES.kontak.path}
+                  className={`t-small max-[359px]:hidden px-3.5 py-3 font-semibold transition-colors md:px-4 lg:px-5 ${ACTION[ink]}`}
+                >
+                  <span className="lg:hidden">Hubungi</span>
+                  <span className="hidden lg:inline">Hubungi sekolah</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((value) => !value)}
+                  aria-expanded={menuOpen}
+                  aria-controls="menu-seluler"
+                  className={`t-small px-3 py-3 font-semibold outline outline-1 -outline-offset-1 md:hidden ${
+                    menuOpen ? "bg-white text-ink" : MENU[ink]
+                  }`}
+                >
+                  {menuOpen ? "Tutup" : "Menu"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
