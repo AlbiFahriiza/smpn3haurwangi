@@ -26,13 +26,14 @@ function daysFor(waktu: string): Day[] {
 
 function clock(waktu: string): string {
   const match = waktu.match(/\d{2}\.\d{2}(?:\s*-\s*\d{2}\.\d{2})?/);
-  return match ? match[0].replace(/\s/g, "") : "—";
+  return match ? match[0].replace(/\s/g, "") : "";
 }
 
 /**
- * Bab rutinitas: tab hari di atas, agenda hari itu turun sebagai pita-pita
- * bergantian nada. Inilah satu hal yang benar-benar bisa dimainkan pengunjung,
- * dan isinya seluruhnya jadwal resmi sekolah.
+ * Bab rutinitas: tab hari di atas, agenda hari itu turun sebagai linimasa
+ * pita bergantian nada dengan penanda jam di kepalanya. Inilah satu hal yang
+ * benar-benar bisa dimainkan pengunjung, dan isinya seluruhnya jadwal resmi
+ * sekolah.
  */
 export function RutinitasChapter({
   routines,
@@ -48,17 +49,20 @@ export function RutinitasChapter({
   const items = routines?.items ?? [];
   const daily = items.filter((item) => daysFor(item.waktu).includes(day));
   const annual = items.filter((item) => daysFor(item.waktu).length === 0);
+  const jamSekolah = clock(items.find((item) => item.waktu.includes("Senin-Jumat"))?.waktu ?? "");
 
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
       mm.add(NO_REDUCE, () => {
+        // Baris agenda masuk menumpang (stagger 0,055 detik) dan menetap
+        // dengan ease expo.out, bukan berhenti kaku.
         gsap.from("[data-band]", {
           y: 14,
           opacity: 0,
-          duration: 0.55,
+          duration: 0.6,
           stagger: 0.055,
-          ease: "power3.out",
+          ease: "expo.out",
         });
       });
       return () => mm.revert();
@@ -86,10 +90,11 @@ export function RutinitasChapter({
             </p>
           </div>
 
-          <p className="t-small mt-6 text-white/90">
-            {clock(items.find((item) => item.waktu.includes("Senin-Jumat"))?.waktu ?? "")} WIB,
-            lima hari sepekan — {identity?.penyelenggaraan ?? "Sehari Penuh / 5 Hari"}.
-          </p>
+          {jamSekolah ? (
+            <p className="t-small mt-6 text-white/90">
+              {jamSekolah} WIB, lima hari sepekan, {identity?.penyelenggaraan ?? "Sehari Penuh / 5 Hari"}.
+            </p>
+          ) : null}
 
           {/* Tab hari */}
           <div
@@ -121,7 +126,7 @@ export function RutinitasChapter({
                       moveFocus(index, -1);
                     }
                   }}
-                  className={`t-small px-4 py-2.5 font-semibold transition-colors ${
+                  className={`t-small rounded-md px-4 py-2.5 font-semibold transition active:translate-y-px ${
                     active
                       ? "bg-white text-marine"
                       : "text-white/90 hover:bg-white/15 hover:text-white"
@@ -145,22 +150,32 @@ export function RutinitasChapter({
                 Tidak ada kegiatan rutin terjadwal pada hari ini.
               </p>
             ) : (
-              <ol className="space-y-px">
-                {daily.map((item, index) => (
-                  <li
-                    key={`${day}-${item.nama}`}
-                    data-band
-                    className={`grid gap-2 px-5 py-5 md:grid-cols-12 md:items-baseline md:gap-6 md:px-7 ${
-                      index % 2 === 0 ? "bg-white/6" : "bg-white/14"
-                    }`}
-                  >
-                    <p className="t-small tabular-nums font-semibold md:col-span-2">
-                      {clock(item.waktu)}
-                    </p>
-                    <p className="t-statement md:col-span-4">{item.nama}</p>
-                    <p className="t-body text-white md:col-span-6">{item.deskripsi}</p>
-                  </li>
-                ))}
+              <ol className="space-y-2">
+                {daily.map((item, index) => {
+                  const jam = clock(item.waktu);
+                  return (
+                    <li
+                      key={`${day}-${item.nama}`}
+                      data-band
+                      className={`grid gap-2 rounded-md px-5 py-5 transition-colors hover:bg-white/20 md:grid-cols-12 md:items-baseline md:gap-6 md:px-7 ${
+                        index % 2 === 0 ? "bg-white/6" : "bg-white/14"
+                      }`}
+                    >
+                      {/* Penanda jam: titik waktu dalam chip bergaris rambut.
+                          Baris tanpa jam tetap memegang kolomnya agar larik
+                          sejajar. */}
+                      <p className="t-small tabular-nums font-semibold md:col-span-2">
+                        {jam ? (
+                          <span className="inline-flex rounded-md border border-white/40 bg-white/10 px-3 py-1.5">
+                            {jam}
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="t-statement md:col-span-4">{item.nama}</p>
+                      <p className="t-body text-white md:col-span-6">{item.deskripsi}</p>
+                    </li>
+                  );
+                })}
               </ol>
             )}
 
@@ -169,7 +184,7 @@ export function RutinitasChapter({
                 {annual.map((item) => (
                   <p key={item.nama} className="t-small text-white/90">
                     <span className="font-semibold text-white">Sekali setahun.</span>{" "}
-                    {item.nama} — {item.deskripsi}
+                    {item.nama}. {item.deskripsi}
                   </p>
                 ))}
               </div>

@@ -36,7 +36,20 @@ export function TentangTab({ content }: { content: Partial<SiteContent> }) {
         judul="Tentang sekolah"
         pengantar="Sejarah, identitas resmi, visi & misi, daftar guru dan tenaga kependidikan, serta keadaan siswa SMP Negeri 3 Haurwangi."
         keterangan={
-          <p className="t-small field-soft">{fakta.join(" · ")}</p>
+          fakta.length > 0 ? (
+            /* Fakta pengenal sebagai deret chip hairline, bukan satu baris
+               panjang: tiap butir bisa dibaca terpisah dan angkanya rapi. */
+            <div className="flex flex-wrap gap-2">
+              {fakta.map((butir) => (
+                <span
+                  key={butir}
+                  className="t-small rounded-md px-3 py-1.5 font-semibold tabular-nums outline outline-1 -outline-offset-1 outline-white/40"
+                >
+                  {butir}
+                </span>
+              ))}
+            </div>
+          ) : null
         }
         gambar={{
           src: "/images/galeri/apel-sekolah.jpg",

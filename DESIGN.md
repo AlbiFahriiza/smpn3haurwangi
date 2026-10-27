@@ -49,6 +49,23 @@ photography."
 - Hover: tombol marine → gelap + translateY(-1px); kartu ekskul/galeri → foto scale 1.03 dalam overflow-hidden.
 - prefers-reduced-motion: semua transisi off.
 
+### Soft Round (revisi 2026-10: sudut pelan, JANGAN terlalu bulat)
+Skala radius dari token `--radius: 0.625rem` (10px) — pakai kelas Tailwind, jangan angka acak:
+- Kecil (chip, tag, kotak input, blok hover nav): `rounded-md` (8px)
+- Tombol & CTA: `rounded-lg` (10px)
+- Kartu, panel, foto, lightbox, masonry item: `rounded-xl` (14px)
+- LARANGAN: `rounded-2xl` ke atas (>= 16px) dan `rounded-full` (kecuali titik indikator <= 8px dan avatar)
+- Setiap sudut membulat WAJIB dipasangkan `overflow-hidden` bila isinya bisa menyentuh sudut (foto, band warna); teks body tidak menempel sudut — padding cukup.
+- Radius tidak mengubah watak flat: tetap tanpa shadow berlapis; bayangan maksimal satu hairline inset / outline 1px.
+
+### Motion v2 (prinsip animasi, hemat tapi hidup)
+- Shared element (FLIP): elemen yang "pindah" (thumbnail galeri → lightbox, blok hover nav, panel detail) bergerak dari posisi asalnya, bukan muncul dari kosong. Ukur rect awal → animasikan transform ke rect akhir (GSAP `flip` manual: getBoundingClientRect + `gsap.fromTo` x/y/scale).
+- Overlapping action: masuknya elemen bertetangga MENUMPANG (elemen ke-2 mulai saat elemen ke-1 baru 60% selesai, stagger 0.05-0.09s), bukan menunggu bergiliran penuh.
+- Follow-through & settle: gerakan berakhir dengan overshoot kecil (ease `back.out(1.4)` / `expo.out`), bukan berhenti kaku.
+- Anticipation di tekan: tombol yang ditekan menurun 1px (`active:translate-y-px` / scale 0.98) sebelum aksinya jalan.
+- Semua animasi gerak pakai transform/opacity/clip-path saja (tanpa animasi width/height/top/left) supaya tidak reflow.
+- Anti-glitch wajib: (1) keadaan awal animasi diset sebelum paint (gsap.set / CSS awal di stylesheet, BUKAN useEffect yang menunggu JS — hindari FOUC flash); (2) konten yang dianimasikan masuk tetap ada di DOM untuk SEO + noscript (visibility/opacity, bukan display:none); (3) tinggi area terpasang tetap (reserve space) agar CLS = 0; (4) `prefers-reduced-motion` → sembunyikan gerak, tampilkan hasil akhir langsung; (5) fokus keyboard tetap terlihat (focus-visible) setelah animasi.
+
 ### Copywriting (bahasa Indonesia, tone wali kelas yang ramah & terpercaya)
 - Kalimat aktif, angka nyata dari data resmi, TANPA em-dash (pakai kanda/titik), tanpa buzzword.
 - Label tombol menyatakan aksi: "Lihat Denah Sekolah", "Hubungi Sekolah".

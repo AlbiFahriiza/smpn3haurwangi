@@ -83,7 +83,9 @@ export function StatsChapter({ stats }: { stats?: HomeStat[] }) {
     <Chapter field="deep" nav="dark" pad="tall" id="statistik-sekolah">
       <div ref={scope}>
       <Inner>
-        <Reveal y={44} stagger={0.12} start="top 86%">
+        {/* Stagger 0,08 detik: petak kedua mulai saat petak pertama baru
+            sebagian jalan, jadi masuknya menumpang, tidak bergiliran penuh. */}
+        <Reveal y={44} stagger={0.08} start="top 86%">
           <div className="grid gap-2 md:grid-cols-12">
             <h2
               data-reveal-item

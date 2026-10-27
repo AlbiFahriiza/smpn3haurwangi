@@ -41,6 +41,10 @@ const ACTION: Record<NavTheme, string> = {
   dark: "bg-foam text-ink hover:bg-white",
 };
 
+/* Soft Round (DESIGN.md): tombol rounded-lg, blok hover rounded-md,
+   ditekan turun 1px (antisipasi). */
+const LUNAK = "rounded-lg active:translate-y-px transition-transform duration-150";
+
 /** Garis rambut kotak tombol menu seluler: satu kelas per tema batang. */
 const MENU: Record<NavTheme, string> = {
   light: "outline-line",
@@ -358,7 +362,7 @@ export function SiteHeader({
                 <span
                   ref={blockRef}
                   aria-hidden
-                  className={`pointer-events-none absolute left-0 top-1/2 h-8 w-0 opacity-0 transition-colors duration-200 ${
+                  className={`pointer-events-none absolute left-0 top-1/2 h-8 w-0 rounded-md opacity-0 transition-colors duration-200 ${
                     hoverPath ? BLOCK[ink].sorot : BLOCK[ink].dasar
                   }`}
                 />
@@ -389,7 +393,7 @@ export function SiteHeader({
                 <Link
                   ref={aksiRef}
                   href={ROUTES.kontak.path}
-                  className={`t-small hidden px-3.5 py-3 font-semibold transition-colors sm:block md:px-4 lg:px-5 ${ACTION[ink]}`}
+                  className={`t-small hidden px-3.5 py-3 font-semibold transition-colors sm:block md:px-4 lg:px-5 ${ACTION[ink]} ${LUNAK}`}
                 >
                   <span className="lg:hidden">Hubungi</span>
                   <span className="hidden lg:inline">Hubungi sekolah</span>
@@ -399,7 +403,7 @@ export function SiteHeader({
                   onClick={() => setMenuOpen((value) => !value)}
                   aria-expanded={menuOpen}
                   aria-controls="menu-seluler"
-                  className={`t-small px-3 py-3 font-semibold outline outline-1 -outline-offset-1 md:hidden ${
+                  className={`t-small rounded-lg px-3 py-3 font-semibold outline outline-1 -outline-offset-1 transition-transform duration-150 active:translate-y-px md:hidden ${
                     menuOpen ? "bg-white text-ink" : MENU[ink]
                   }`}
                 >

@@ -7,10 +7,18 @@ import { ROUTES } from "@/lib/site";
 import { Chapter, Inner } from "./chapter";
 import { Reveal } from "@/components/motion/reveal";
 
+/** Gelambung gerak foto saat kartu disentuh: cepat di awal, menetap panjang
+ * di akhir (cubic-bezier milik desain); otomatis mati bagi pengguna yang
+ * meminta gerak minimal. */
+const FOTO_HOVER =
+  "transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]";
+
 /**
  * Bab guru: satu kepala yang tetap di tempatnya sementara baris-baris wajah
- * lewat di sebelahnya. Hanya potret yang memang sudah ada di data sekolah yang
- * ditampilkan; jumlah total tetap disebut apa adanya.
+ * lewat di sebelahnya. Tiap kartu adalah tautan ke direktori lengkap di
+ * halaman tentang (pola yang sama dengan petak galeri). Hanya potret yang
+ * memang sudah ada di data sekolah yang ditampilkan; jumlah total tetap
+ * disebut apa adanya.
  */
 export function GuruChapter({ teachers }: { teachers?: TeachersSection }) {
   const semua = teachers?.items ?? [];
@@ -55,24 +63,34 @@ export function GuruChapter({ teachers }: { teachers?: TeachersSection }) {
             </div>
           </div>
 
-          <Reveal className="lg:col-span-7" y={32} stagger={0.1}>
+          <Reveal className="lg:col-span-7" y={32} stagger={0.08}>
             <ul className="grid gap-x-8 gap-y-10 sm:grid-cols-2">
               {berfoto.map((item) => (
                 <li key={item.nama} data-reveal-item>
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-line">
-                    <Image
-                      src={item.foto}
-                      alt={`${item.nama}, ${item.jabatan} SMP Negeri 3 Haurwangi`}
-                      fill
-                      sizes="(min-width: 1024px) 30vw, 90vw"
-                      className="object-cover"
-                    />
-                  </div>
-                  <h3 className="t-statement mt-4">{item.nama}</h3>
-                  <p className="t-small field-soft">
-                    {item.jabatan}
-                    {item.mapel && item.mapel !== "-" ? ` · ${item.mapel}` : ""}
-                  </p>
+                  {/* Kartu guru menautkan ke direktori lengkap di halaman
+                      tentang. Saat ditekan kartu turun satu piksel
+                      (antisipasi tekan) sebelum navigasi berjalan. */}
+                  <Link
+                    href={`${ROUTES.tentang.path}#guru-dan-tendik`}
+                    className="group block transition active:translate-y-px"
+                  >
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-line">
+                      <Image
+                        src={item.foto}
+                        alt={`${item.nama}, ${item.jabatan} SMP Negeri 3 Haurwangi`}
+                        fill
+                        sizes="(min-width: 1024px) 30vw, 90vw"
+                        className={`object-cover ${FOTO_HOVER}`}
+                      />
+                    </div>
+                    <h3 className="t-statement mt-4 transition-colors group-hover:text-marine">
+                      {item.nama}
+                    </h3>
+                    <p className="t-small field-soft">
+                      {item.jabatan}
+                      {item.mapel && item.mapel !== "-" ? ` · ${item.mapel}` : ""}
+                    </p>
+                  </Link>
                 </li>
               ))}
             </ul>

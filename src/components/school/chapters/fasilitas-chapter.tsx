@@ -19,9 +19,12 @@ type Tempat = {
 };
 
 /**
- * Bab fasilitas: satu cakram warna dengan potret tempat di atasnya, dipilih
- * dari daftar nama di sebelahnya. Cakram berputar sedikit mengikuti gulir,
- * potretnya bergerak dua persen naik-turun seperti benda nyata di atas piring.
+ * Bab fasilitas: satu panel berbingkai abyss dengan potret tempat di atasnya,
+ * dipilih dari daftar nama di sebelahnya. Potret bergerak dua persen naik-turun
+ * mengikuti gulir seperti benda nyata di atas bingkainya, dan ketika pengunjung
+ * memilih tempat lain, potret itu berangkat dari item legenda yang diklik lalu
+ * menetap kembali ke tempatnya (FLIP manual: rect awal diukur, lalu animasi
+ * x/y/scale menuju rect akhir, murni transform tanpa reflow).
  */
 export function FasilitasChapter({
   denah,
@@ -89,12 +92,20 @@ export function FasilitasChapter({
             },
           },
         );
+        // Panel terbuka dari balik garis atasnya (clip-path, bukan opacity),
+        // jadi tidak pernah bertabrakan properti dengan FLIP x/y/scale.
+        gsap.from("[data-disc-object]", {
+          clipPath: "inset(0% 0% 100% 0%)",
+          duration: 1.1,
+          ease: "expo.out",
+          scrollTrigger: { trigger: "[data-disc]", start: "top 82%", once: true },
+        });
         gsap.from("[data-place-list] > li", {
           y: 18,
           opacity: 0,
           duration: 0.7,
           stagger: 0.07,
-          ease: "power4.out",
+          ease: "expo.out",
           scrollTrigger: { trigger: "[data-place-list]", start: "top 86%", once: true },
         });
       });
@@ -103,33 +114,52 @@ export function FasilitasChapter({
     { scope },
   );
 
-  // Potret dan keterangan berganti dengan satu gerak pendek, bukan kilatan.
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add(NO_REDUCE, () => {
-        gsap.from("[data-disc-object]", {
-          opacity: 0,
-          scale: 1.04,
-          duration: 0.55,
-          ease: "power3.out",
-        });
-      });
-      return () => mm.revert();
-    },
-    { scope, dependencies: [activeIndex], revertOnUpdate: true },
-  );
+  /**
+   * FLIP manual: item legenda yang diklik dan panel potret sama-sama diukur
+   * rect-nya, lalu panel dianimasikan transform dari rect item menuju rect
+   * asalnya dengan ease expo.out. Dengan begitu potret "berangkat" dari item
+   * yang dipilih, bukan muncul dari kosong. Gerak minimal: potret berganti
+   * seketika tanpa perjalanan.
+   */
+  const pilihTempat = (index: number, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (index === activeIndex) return;
+    setActiveIndex(index);
+
+    const panel = scope.current?.querySelector<HTMLElement>("[data-disc-object]");
+    if (!panel) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const from = event.currentTarget.getBoundingClientRect();
+    const to = panel.getBoundingClientRect();
+    // Skala awal dijaga seragam (bukan x/y terpisah) supaya potret tidak
+    // melar; dibatasi supaya panel kecil tapi masih terbaca saat berangkat.
+    const skala = Math.min(Math.max(from.height / to.height, 0.3), 1);
+    gsap.fromTo(
+      panel,
+      {
+        x: from.left + from.width / 2 - (to.left + to.width / 2),
+        y: from.top + from.height / 2 - (to.top + to.height / 2),
+        scale: skala,
+      },
+      { x: 0, y: 0, scale: 1, duration: 0.55, ease: "expo.out", overwrite: "auto" },
+    );
+  };
 
   return (
     <Chapter field="sky" nav="light" pad="tall" id="fasilitas-sekolah">
       <div ref={scope}>
         <Inner>
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
-            {/* Cakram + potret tempat */}
+            {/* Panel potret tempat */}
             <div className="lg:col-span-6">
-              <div className="relative mx-auto aspect-square w-full max-w-[30rem]">
-                <div className="absolute inset-0 rounded-full bg-abyss" aria-hidden />
-                <div className="absolute inset-[7%] overflow-hidden rounded-full" data-disc-object>
+              <div data-disc className="relative mx-auto aspect-square w-full max-w-[30rem]">
+                <div className="absolute inset-0 rounded-xl bg-abyss" aria-hidden />
+                {/* z-index supaya panel yang sedang terbang dari item legenda
+                    melintas di atas daftar, bukan tersembunyi di baliknya. */}
+                <div
+                  data-disc-object
+                  className="absolute inset-[7%] z-[1] overflow-hidden rounded-xl"
+                >
                   <Image
                     key={active.src}
                     src={active.src}
@@ -164,9 +194,9 @@ export function FasilitasChapter({
                     <li key={place.nama}>
                       <button
                         type="button"
-                        onClick={() => setActiveIndex(index)}
+                        onClick={(event) => pilihTempat(index, event)}
                         aria-pressed={isActive}
-                        className={`w-full px-5 py-4 text-left transition-colors ${
+                        className={`w-full rounded-md px-5 py-4 text-left transition active:translate-y-px ${
                           isActive ? "bg-abyss text-white" : "hover:bg-abyss/6"
                         }`}
                       >
@@ -195,7 +225,7 @@ export function FasilitasChapter({
         <Inner className="mt-16 md:mt-24">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <figure className="lg:col-span-7">
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-white">
                 <Image
                   src={denah?.image ?? "/images/denah-sekolah.jpg"}
                   alt="Denah blok bangunan SMP Negeri 3 Haurwangi"
@@ -205,7 +235,8 @@ export function FasilitasChapter({
                 />
               </div>
               <figcaption className="t-small field-soft mt-3">
-                {denah?.title ?? "Denah Sekolah"} — {denah?.description ?? ""}
+                {denah?.title ?? "Denah Sekolah"}
+                {denah?.description ? `. ${denah.description}` : ""}
               </figcaption>
             </figure>
 

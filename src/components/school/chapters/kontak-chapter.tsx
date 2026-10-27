@@ -45,7 +45,7 @@ export function KontakChapter({
         gsap.from("[data-strip-foto]", {
           clipPath: "inset(0% 0% 100% 0%)",
           duration: 1.1,
-          stagger: 0.1,
+          stagger: 0.08,
           ease: "expo.out",
           scrollTrigger: { trigger: "[data-strip-foto]", start: "top 88%", once: true },
         });
@@ -59,51 +59,57 @@ export function KontakChapter({
     <Chapter field="deep" nav="dark" pad="tall" id="kontak">
       <div ref={scope}>
         <Inner>
-          <h2 className="t-head">Hubungi sekolah</h2>
+          <Reveal>
+            <h2 data-reveal-item className="t-head">
+              Hubungi sekolah
+            </h2>
+          </Reveal>
 
           <div className="mt-12 grid grid-cols-3 gap-2">
             {STRIP.map((foto) => (
               <div
                 key={foto.src}
                 data-strip-foto
-                className="relative aspect-[4/5] overflow-hidden bg-abyss"
+                className="group relative aspect-[4/5] overflow-hidden rounded-xl bg-abyss"
               >
                 <Image
                   src={foto.src}
                   alt={foto.alt}
                   fill
                   sizes="(min-width: 768px) 30vw, 31vw"
-                  className="object-cover"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                 />
               </div>
             ))}
           </div>
 
-          <div className="mt-2 grid gap-6 md:grid-cols-12 md:gap-4">
-            <div className="md:col-span-5 md:bg-white/8 md:p-6">
-              <p className="t-small field-soft">Alamat</p>
-              <p className="t-body mt-2">{alamat}</p>
+          <Reveal className="mt-2" stagger={0.07}>
+            <div className="grid gap-6 md:grid-cols-12 md:gap-4">
+              <div data-reveal-item className="md:col-span-5 md:rounded-xl md:bg-white/8 md:p-6">
+                <p className="t-small field-soft">Alamat</p>
+                <p className="t-body mt-2">{alamat}</p>
+              </div>
+              <div data-reveal-item className="md:col-span-4 md:rounded-xl md:bg-white/16 md:p-6">
+                <p className="t-small field-soft">Surel resmi</p>
+                <a
+                  href={surelUrl}
+                  className="t-body mt-2 block break-words underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                >
+                  {email}
+                </a>
+              </div>
+              <div data-reveal-item className="md:col-span-3 md:rounded-xl md:bg-white/8 md:p-6">
+                <p className="t-small field-soft">Jam layanan</p>
+                <p className="t-body mt-2">{jam}</p>
+              </div>
             </div>
-            <div className="md:col-span-4 md:bg-white/16 md:p-6">
-              <p className="t-small field-soft">Surel resmi</p>
-              <a
-                href={surelUrl}
-                className="t-body mt-2 block break-words underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
-              >
-                {email}
-              </a>
-            </div>
-            <div className="md:col-span-3 md:bg-white/8 md:p-6">
-              <p className="t-small field-soft">Jam layanan</p>
-              <p className="t-body mt-2">{jam}</p>
-            </div>
-          </div>
+          </Reveal>
 
           {/* Petak aksi */}
           <Reveal className="mt-2" y={24}>
             <div
               data-reveal-item
-              className="grid gap-8 bg-marine p-7 text-white md:grid-cols-12 md:items-end md:p-12"
+              className="grid gap-8 overflow-hidden rounded-xl bg-marine p-7 text-white md:grid-cols-12 md:items-end md:p-12"
             >
               <div className="md:col-span-7">
                 <p className="t-statement max-w-[34ch]">
@@ -118,7 +124,7 @@ export function KontakChapter({
                 <div className="flex flex-col items-start gap-4 md:items-end">
                   <a
                     href={surelUrl}
-                    className="t-body bg-foam px-6 py-4 font-semibold text-ink transition-colors hover:bg-white"
+                    className="t-body rounded-lg bg-foam px-6 py-4 font-semibold text-ink transition-[background-color,translate] duration-200 hover:bg-white hover:-translate-y-px active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     Kirim surel ke sekolah
                   </a>
@@ -126,7 +132,7 @@ export function KontakChapter({
                     href={peta}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="t-small underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
+                    className="t-small underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
                   >
                     Lihat lokasi di peta
                   </a>
@@ -135,17 +141,20 @@ export function KontakChapter({
             </div>
           </Reveal>
 
-          <p className="t-body field-soft mt-6 max-w-[62ch]">
-            Nomor telepon belum dipublikasikan pada sumber resmi sekolah, jadi tidak dicantumkan
-            di sini. Alamat dan surel di atas berasal dari data resmi Kemendikdasmen.
-          </p>
-          <Link
-            href={ROUTES.kontak.path}
-            className="t-small mt-8 inline-flex items-center gap-2 font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
-          >
-            Halaman kontak lengkap dengan peta
-            <span aria-hidden>&rarr;</span>
-          </Link>
+          <Reveal className="mt-6" stagger={0.07}>
+            <p data-reveal-item className="t-body field-soft max-w-[62ch]">
+              Nomor telepon belum dipublikasikan pada sumber resmi sekolah, jadi tidak dicantumkan
+              di sini. Alamat dan surel di atas berasal dari data resmi Kemendikdasmen.
+            </p>
+            <Link
+              href={ROUTES.kontak.path}
+              data-reveal-item
+              className="t-small mt-8 inline-flex items-center gap-2 font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+            >
+              Halaman kontak lengkap dengan peta
+              <span aria-hidden>&rarr;</span>
+            </Link>
+          </Reveal>
         </Inner>
       </div>
     </Chapter>

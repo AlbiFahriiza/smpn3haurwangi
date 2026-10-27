@@ -69,7 +69,7 @@ export function SambutanChapter({
       <Inner>
         <div
           ref={scope}
-          className="bg-abyss p-6 text-white md:p-12 lg:p-16"
+          className="rounded-xl bg-abyss p-6 text-white md:p-12 lg:p-16"
         >
           <h2 className="t-head">{sambutan?.title ?? "Sambutan Kepala Sekolah"}</h2>
 
@@ -79,7 +79,7 @@ export function SambutanChapter({
 
           <div className="mt-10 grid gap-10 lg:mt-14 lg:grid-cols-12 lg:gap-14">
             <figure className="max-w-[22rem] lg:col-span-5">
-              <div className="aspect-[3/4] overflow-hidden rounded-t-[999px]" data-sambutan-photo>
+              <div className="aspect-[3/4] overflow-hidden rounded-xl" data-sambutan-photo>
                 <Image
                   src="/images/hero/gerbang-utama.jpg"
                   alt="Gerbang utama SMP Negeri 3 Haurwangi"
@@ -113,7 +113,7 @@ export function SambutanChapter({
                 </div>
 
                 <p className="t-small text-white/70">
-                  {nama} — {jabatan}
+                  {nama}, {jabatan}
                 </p>
               </div>
             </div>

@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import type {
   AboutSection,
   ContactSection,
@@ -12,6 +15,8 @@ import type {
 import { Chapter, Inner } from "./chapter";
 import { Reveal } from "@/components/motion/reveal";
 
+const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
+
 /**
  * Lima bab halaman Tentang Sekolah. Semuanya dibangun dari berkas konten yang
  * sama dengan beranda; yang membedakan hanyalah kelengkapannya — di sini
@@ -19,19 +24,29 @@ import { Reveal } from "@/components/motion/reveal";
  *
  * Aturan yang dipegang sama seperti beranda: satu bidang warna datar per bab,
  * tanpa kartu, tanpa garis pemisah, tanpa bayangan. Pemisah antar baris adalah
- * jarak, bukan garis.
+ * jarak, bukan garis. Sudut membulat mengikuti skala radius Soft Round (chip
+ * rounded-md, foto rounded-xl) dan geraknya mengikuti Motion v2: masuk
+ * bertumpang, berakhir dengan settle, angka dihitung naik.
  */
 
 /**
  * Deret label–nilai datar. Nilainya sengaja setinggi teks isi, bukan setinggi
  * teks besar: label kecil yang menempel di atas teks besar terbaca seperti
  * kicker bertumpuk, dan itu justru yang harus dihindari.
+ *
+ * Barisnya bukan kartu: bidang sorot rounded-md hanya muncul saat kursor
+ * melintas. Sisi kiri–kanan ditarik keluar sejauh paddingnya supaya teks
+ * tetap sejajar dengan kolom sebelah.
  */
 function DaftarNilai({ baris }: { baris: Array<[string, React.ReactNode]> }) {
   return (
-    <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
+    <dl className="grid gap-x-10 gap-y-2 sm:grid-cols-2">
       {baris.map(([label, nilai]) => (
-        <div key={label} data-reveal-item className="min-w-0">
+        <div
+          key={label}
+          data-reveal-item
+          className="min-w-0 -mx-3 rounded-md px-3 py-2.5 transition-colors duration-200 hover:bg-white/10"
+        >
           <dt className="t-small field-soft">{label}</dt>
           <dd className="t-body mt-1">{nilai}</dd>
         </div>
@@ -43,14 +58,56 @@ function DaftarNilai({ baris }: { baris: Array<[string, React.ReactNode]> }) {
 /**
  * Satu angka penting dengan labelnya. Label dan angka duduk sebaris; kalau
  * ditumpuk, label kecil di atas angka besar terbaca sebagai kicker.
+ * Angkanya memakai tabular-nums supaya kolomnya sejajar; nilai angka murni
+ * diberi tanda data-count untuk dihitung naik saat masuk layar.
  */
-function Angka({ label, nilai }: { label: string; nilai: React.ReactNode }) {
+function Angka({ label, nilai }: { label: string; nilai: string }) {
+  const hitung = /^\d+$/.test(nilai.trim()) ? Number(nilai) : null;
   return (
     <div data-reveal-item className="flex items-baseline justify-between gap-6">
       <dt className="t-small field-soft">{label}</dt>
-      <dd className="t-statement">{nilai}</dd>
+      <dd className="t-statement tabular-nums" data-count={hitung ?? undefined}>
+        {nilai}
+      </dd>
     </div>
   );
+}
+
+/**
+ * Pembungkus yang menghitung naik semua [data-count] di dalamnya saat masuk
+ * layar. Hasil akhir sudah tercetak di HTML; penghitungan hanya menimpa
+ * isinya selama animasi (konten tetap di DOM), dan tidak jalan sama sekali
+ * bila pengguna meminta gerak dikurangi. Ease expo.out memberi ujung gerak
+ * yang melunak, bukan berhenti kaku.
+ */
+function HitungNaik({ children }: { children: React.ReactNode }) {
+  const scope = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        scope.current?.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
+          const target = Number(el.dataset.count);
+          if (!Number.isFinite(target) || target <= 0) return;
+          const hitung = { v: 0 };
+          gsap.to(hitung, {
+            v: target,
+            duration: 1.4,
+            ease: "expo.out",
+            scrollTrigger: { trigger: el, start: "top 90%", once: true },
+            onUpdate: () => {
+              el.textContent = Math.round(hitung.v).toLocaleString("id-ID");
+            },
+          });
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
+
+  return <div ref={scope}>{children}</div>;
 }
 
 export function SejarahChapter({
@@ -62,42 +119,91 @@ export function SejarahChapter({
 }) {
   const sejarah = about?.sejarah ?? [];
   const kutipan = about?.sambutanTeks;
+  const scope = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        /* Inisial besar masuk dengan settle back.out: sedikit menumbung
+           lalu duduk di tempatnya, seperti stempel yang ditekan. */
+        gsap.from("[data-drop-cap]", {
+          scale: 1.24,
+          rotation: -3,
+          opacity: 0,
+          duration: 0.9,
+          ease: "back.out(1.4)",
+          transformOrigin: "left top",
+          scrollTrigger: { trigger: "[data-drop-cap]", start: "top 88%", once: true },
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
 
   return (
     <Chapter field="foam" nav="light" pad="tall" id="sejarah">
       <Inner>
-        <Reveal stagger={0.08}>
-          <h2 data-reveal-item className="t-head">
-            Sejarah sekolah
-          </h2>
+        <div ref={scope}>
+          <Reveal stagger={0.08}>
+            <h2 data-reveal-item className="t-head">
+              Sejarah sekolah
+            </h2>
 
-          <div className="mt-10 grid gap-x-16 gap-y-8 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              {sejarah.length > 0 ? (
-                sejarah.map((paragraf) => (
-                  <p key={paragraf.slice(0, 24)} data-reveal-item className="t-body mb-5 max-w-[62ch]">
-                    {paragraf}
+            <div className="mt-10 grid gap-x-16 gap-y-8 lg:grid-cols-12">
+              <div className="lg:col-span-7">
+                {sejarah.length > 0 ? (
+                  sejarah.map((paragraf, urutan) => {
+                    const hurufAwal = paragraf.charAt(0);
+                    const bermulaHuruf = urutan === 0 && /[A-Za-z]/.test(hurufAwal);
+                    return (
+                      <p
+                        key={paragraf.slice(0, 24)}
+                        data-reveal-item
+                        className="t-body mb-5 max-w-[62ch]"
+                      >
+                        {bermulaHuruf ? (
+                          <>
+                            {/* Inisial editorial: huruf pertama diangkat jadi drop
+                                cap. Tetap teks biasa, bukan hiasan, supaya terbaca
+                                oleh pembaca layar dan tetap muncul tanpa JavaScript. */}
+                            <span
+                              data-drop-cap
+                              className="float-left -mt-[0.05em] mr-[0.14em] text-[3.3em] leading-[0.82] font-extrabold text-marine"
+                            >
+                              {hurufAwal}
+                            </span>
+                            {paragraf.slice(1)}
+                          </>
+                        ) : (
+                          paragraf
+                        )}
+                      </p>
+                    );
+                  })
+                ) : (
+                  <p data-reveal-item className="t-body field-soft max-w-[62ch]">
+                    Sejarah sekolah belum diisi. Guru dapat melengkapinya melalui panel admin.
                   </p>
-                ))
-              ) : (
-                <p data-reveal-item className="t-body field-soft max-w-[62ch]">
-                  Sejarah sekolah belum diisi. Guru dapat melengkapinya melalui panel admin.
-                </p>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="lg:col-span-5">
-              {kutipan ? (
-                <figure data-reveal-item className="lg:sticky lg:top-28">
-                  <blockquote className="t-statement max-w-[26ch]">{kutipan}</blockquote>
-                  <figcaption className="t-small field-soft mt-5">
-                    {identity?.kepalaSekolah ?? "Agus Solihin"}, Kepala Sekolah
-                  </figcaption>
-                </figure>
-              ) : null}
+              <div className="lg:col-span-5">
+                {kutipan ? (
+                  <figure data-reveal-item className="lg:sticky lg:top-28">
+                    <blockquote className="t-statement max-w-[26ch] font-serif italic">
+                      {kutipan}
+                    </blockquote>
+                    <figcaption className="t-small field-soft mt-5">
+                      {identity?.kepalaSekolah ?? "Agus Solihin"}, Kepala Sekolah
+                    </figcaption>
+                  </figure>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </Inner>
     </Chapter>
   );
@@ -112,6 +218,7 @@ export function IdentitasChapter({
 }) {
   const id = identity;
   const surel = contact?.email ?? id?.email ?? "smpn3_haurwangi@yahoo.com";
+  const surelUrl = `mailto:${surel}?subject=Pertanyaan%20tentang%20SMP%20Negeri%203%20Haurwangi`;
   const alamatLengkap = [
     id?.alamat ?? "Jalan Buniayu, Desa Kertamukti, Kec. Haurwangi",
     id?.kabupaten ?? "Kabupaten Cianjur",
@@ -127,10 +234,21 @@ export function IdentitasChapter({
     ["Kurikulum", id?.kurikulum ?? "Kurikulum Merdeka"],
     ["Penyelenggaraan", id?.penyelenggaraan ?? "Sehari Penuh / 5 Hari"],
     ["Berdiri", `${id?.berdiri ?? "26 April 2006"} · SK ${id?.skPendirian ?? "421.3/Kep.71-Ks/2006"}`],
-    ["Luas tanah", id?.luasTanah ?? "6.138 m²"],
+    ["Luas tanah", <span key="luas" className="tabular-nums">{id?.luasTanah ?? "6.138 m²"}</span>],
     ["Kepala sekolah", id?.kepalaSekolah ?? "Agus Solihin"],
     ["Operator sekolah", id?.operator ?? "Risha Agustiansyah"],
-    ["Surel resmi", <span key="surel" className="break-words">{surel}</span>],
+    [
+      "Surel resmi",
+      /* Satu-satunya saluran yang bisa diklik di tabel ini: tekan turun 1px
+         (anticipation) sebelum surel terbuka. */
+      <a
+        key="surel"
+        href={surelUrl}
+        className="inline-block rounded-md break-words underline decoration-white/40 underline-offset-4 transition-[text-decoration-color,translate] duration-200 hover:decoration-white active:translate-y-px"
+      >
+        {surel}
+      </a>,
+    ],
     ["Alamat lengkap", alamatLengkap],
   ];
 
@@ -179,28 +297,42 @@ export function VisiMisiChapter({ vision }: { vision?: VisionSection }) {
         </Reveal>
 
         <div className="mt-16 grid gap-x-16 gap-y-12 lg:grid-cols-2">
-          <Reveal stagger={0.06}>
+          <Reveal stagger={0.05}>
             <h3 data-reveal-item className="t-body field-soft">
               Misi
             </h3>
-            {/* Daftar berurut asli: nomornya digambar peramban, bukan teks hiasan. */}
-            <ol data-reveal-item className="mt-6 list-decimal space-y-4 pl-7">
-              {misi.map((butir) => (
-                <li key={butir.slice(0, 24)} className="t-body max-w-[58ch]">
-                  {butir}
+            {/* Daftar berurut asli; nomornya jadi penanda badge rounded-md.
+               role="list" dipasang eksplisit karena penanda gambar dihapus,
+               supaya pembaca layar tetap mengumumkan urutannya. */}
+            <ol role="list" className="mt-6 list-none space-y-5">
+              {misi.map((butir, urutan) => (
+                <li key={butir.slice(0, 24)} data-reveal-item className="t-body flex gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky t-small font-semibold tabular-nums"
+                  >
+                    {urutan + 1}
+                  </span>
+                  <span className="max-w-[58ch]">{butir}</span>
                 </li>
               ))}
             </ol>
           </Reveal>
 
-          <Reveal stagger={0.06}>
+          <Reveal stagger={0.05}>
             <h3 data-reveal-item className="t-body field-soft">
               Tujuan
             </h3>
-            <ol data-reveal-item className="mt-6 list-decimal space-y-4 pl-7">
-              {tujuan.map((butir) => (
-                <li key={butir.slice(0, 24)} className="t-body max-w-[58ch]">
-                  {butir}
+            <ol role="list" className="mt-6 list-none space-y-5">
+              {tujuan.map((butir, urutan) => (
+                <li key={butir.slice(0, 24)} data-reveal-item className="t-body flex gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky t-small font-semibold tabular-nums"
+                  >
+                    {urutan + 1}
+                  </span>
+                  <span className="max-w-[58ch]">{butir}</span>
                 </li>
               ))}
             </ol>
@@ -212,7 +344,9 @@ export function VisiMisiChapter({ vision }: { vision?: VisionSection }) {
             <p data-reveal-item className="t-body field-soft">
               Moto sekolah
             </p>
-            <p data-reveal-item className="t-statement mt-3 max-w-[34ch]">
+            {/* Motto memakai aksen serif miring: satu dari dua tempat yang
+               diizinkan DESIGN.md untuk keluarga huruf ini. */}
+            <p data-reveal-item className="t-statement mt-3 max-w-[34ch] font-serif italic">
               {vision.motto}
             </p>
           </Reveal>
@@ -256,11 +390,13 @@ export function GuruRosterChapter({ teachers }: { teachers?: TeachersSection }) 
           </p>
         </Reveal>
 
-        <dl className="mt-12 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          {statistik.map((item) => (
-            <Angka key={item.label} label={item.label} nilai={item.value} />
-          ))}
-        </dl>
+        <HitungNaik>
+          <dl className="mt-12 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+            {statistik.map((item) => (
+              <Angka key={item.label} label={item.label} nilai={item.value} />
+            ))}
+          </dl>
+        </HitungNaik>
 
         <div className="mt-20 space-y-16">
           {kelompok.map((grup) => (
@@ -276,13 +412,13 @@ export function GuruRosterChapter({ teachers }: { teachers?: TeachersSection }) 
                     className={orang.foto ? "grid gap-6 sm:grid-cols-[8.5rem_1fr]" : ""}
                   >
                     {orang.foto ? (
-                      <div className="relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden bg-abyss">
+                      <div className="group relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden rounded-xl bg-abyss">
                         <Image
                           src={orang.foto}
                           alt={`${orang.nama}, ${orang.jabatan} SMP Negeri 3 Haurwangi`}
                           fill
                           sizes="8.5rem"
-                          className="object-cover"
+                          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
                         />
                       </div>
                     ) : null}
@@ -330,11 +466,13 @@ export function SiswaChapter({ students }: { students?: StudentsSection }) {
           </h2>
         </Reveal>
 
-        <dl className="mt-12 grid gap-x-10 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-          {angka.map(([label, nilai]) => (
-            <Angka key={label} label={label} nilai={nilai} />
-          ))}
-        </dl>
+        <HitungNaik>
+          <dl className="mt-12 grid gap-x-10 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+            {angka.map(([label, nilai]) => (
+              <Angka key={label} label={label} nilai={nilai} />
+            ))}
+          </dl>
+        </HitungNaik>
 
         {kelas.length > 0 ? (
           <Reveal className="mt-20" stagger={0.04}>

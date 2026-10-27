@@ -151,10 +151,10 @@ export function SiteFooter({
           <button
             type="button"
             onClick={keAtas}
-            className="t-small inline-flex shrink-0 items-center gap-2 font-semibold underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
+            className="t-small group inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 font-semibold underline decoration-transparent underline-offset-4 transition-[colors,transform] duration-150 hover:decoration-current active:translate-y-px"
           >
             Kembali ke atas
-            <span aria-hidden>↑</span>
+            <span aria-hidden className="transition-transform duration-300 group-hover:-translate-y-0.5">↑</span>
           </button>
         </div>
       </Inner>
