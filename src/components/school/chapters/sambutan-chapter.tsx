@@ -9,6 +9,7 @@ import type { AboutSection, HomeSection, Identity } from "@/lib/content";
 import { ROUTES } from "@/lib/site";
 import { Chapter, Inner } from "./chapter";
 import { PeelText } from "@/components/motion/reveal";
+import { useTekan } from "../kontak-tekan";
 
 const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
 
@@ -33,6 +34,9 @@ export function SambutanChapter({
   identity?: Identity;
 }) {
   const scope = useRef<HTMLDivElement>(null);
+  // Tautan di dalam kalimat: reaksi tekan cukup meredup sekejap (mode halus),
+  // karena skala tidak berlaku pada elemen inline.
+  const tekanTautan = useTekan("halus");
   const teks = sambutan?.teks ?? [];
   const nama = sambutan?.nama ?? identity?.kepalaSekolah ?? "Agus Solihin";
   const jabatan = sambutan?.jabatan ?? `Kepala ${identity?.nama ?? "SMP Negeri 3 Haurwangi"}`;
@@ -104,6 +108,7 @@ export function SambutanChapter({
                     {teks[2] && <p className="t-body text-white/80">{teks[2]}</p>}
                     <Link
                       href={ROUTES.tentang.path}
+                      {...tekanTautan}
                       className="t-small inline-flex items-center gap-2 font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
                     >
                       Baca sejarah dan visi sekolah

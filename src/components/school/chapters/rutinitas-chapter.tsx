@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { Identity, RoutinesSection } from "@/lib/content";
 import { Chapter, Inner } from "./chapter";
+import { useTekan } from "../kontak-tekan";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 type Day = (typeof DAYS)[number];
@@ -45,6 +46,9 @@ export function RutinitasChapter({
   const [day, setDay] = useState<Day>("Senin");
   const scope = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Tab hari adalah satu-satunya pemicu di bab ini: reaksi tekan diberikan
+  // seketika saat pointer menyentuhnya, bukan menunggu klik selesai.
+  const tekanHari = useTekan();
 
   const items = routines?.items ?? [];
   const daily = items.filter((item) => daysFor(item.waktu).includes(day));
@@ -55,15 +59,39 @@ export function RutinitasChapter({
     () => {
       const mm = gsap.matchMedia();
       mm.add(NO_REDUCE, () => {
+        const larik = scope.current?.querySelector<HTMLElement>("[data-agenda]");
+        if (!larik) return;
         // Baris agenda masuk menumpang (stagger 0,055 detik) dan menetap
-        // dengan ease expo.out, bukan berhenti kaku.
+        // dengan ease expo.out, bukan berhenti kaku; diikat ke layar supaya
+        // susul-menyusulnya benar-benar terlihat, sekali saja.
         gsap.from("[data-band]", {
           y: 14,
           opacity: 0,
           duration: 0.6,
           stagger: 0.055,
           ease: "expo.out",
+          scrollTrigger: { trigger: larik, start: "top 92%", once: true },
         });
+        // Penanda linimasa tumbuh mengikuti gulir (scrub): murni transform
+        // di garis rambut, digerakkan gulir sendiri, tidak pernah bergerak
+        // sendiri, dan berhenti penuh saat daftar selesai dibaca.
+        const pita = larik.querySelector<HTMLElement>("[data-agenda-rail]");
+        if (pita) {
+          gsap.fromTo(
+            pita,
+            { scaleY: 0 },
+            {
+              scaleY: 1,
+              ease: "none",
+              scrollTrigger: {
+                trigger: larik,
+                start: "top 80%",
+                end: "bottom 55%",
+                scrub: 0.6,
+              },
+            },
+          );
+        }
       });
       return () => mm.revert();
     },
@@ -116,6 +144,7 @@ export function RutinitasChapter({
                   aria-controls={`agenda-${option}`}
                   tabIndex={active ? 0 : -1}
                   onClick={() => setDay(option)}
+                  {...tekanHari}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowRight") {
                       event.preventDefault();
@@ -125,8 +154,12 @@ export function RutinitasChapter({
                       event.preventDefault();
                       moveFocus(index, -1);
                     }
+                    // Reaksi tekan papan tombol dari useTekan tetap berjalan
+                    // bersama navigasi panah (properti eksplisit menang atas
+                    // sebarnya di atas, jadi keduanya harus dirangkai di sini).
+                    tekanHari.onKeyDown(event);
                   }}
-                  className={`t-small rounded-md px-4 py-2.5 font-semibold transition active:translate-y-px ${
+                  className={`t-small rounded-md px-4 py-2.5 font-semibold transition-[background-color,color,translate] duration-200 ${
                     active
                       ? "bg-white text-marine"
                       : "text-white/90 hover:bg-white/15 hover:text-white"
@@ -150,33 +183,42 @@ export function RutinitasChapter({
                 Tidak ada kegiatan rutin terjadwal pada hari ini.
               </p>
             ) : (
-              <ol className="space-y-2">
-                {daily.map((item, index) => {
-                  const jam = clock(item.waktu);
-                  return (
-                    <li
-                      key={`${day}-${item.nama}`}
-                      data-band
-                      className={`grid gap-2 rounded-md px-5 py-5 transition-colors hover:bg-white/20 md:grid-cols-12 md:items-baseline md:gap-6 md:px-7 ${
-                        index % 2 === 0 ? "bg-white/6" : "bg-white/14"
-                      }`}
-                    >
-                      {/* Penanda jam: titik waktu dalam chip bergaris rambut.
-                          Baris tanpa jam tetap memegang kolomnya agar larik
-                          sejajar. */}
-                      <p className="t-small tabular-nums font-semibold md:col-span-2">
-                        {jam ? (
-                          <span className="inline-flex rounded-md border border-white/40 bg-white/10 px-3 py-1.5">
-                            {jam}
-                          </span>
-                        ) : null}
-                      </p>
-                      <p className="t-statement md:col-span-4">{item.nama}</p>
-                      <p className="t-body text-white md:col-span-6">{item.deskripsi}</p>
-                    </li>
-                  );
-                })}
-              </ol>
+              <div data-agenda className="relative">
+                {/* Garis rambut di gutter kiri larik: penanda linimasa yang
+                    tumbuh mengikuti gulir. */}
+                <span
+                  aria-hidden
+                  data-agenda-rail
+                  className="absolute top-0 bottom-0 left-0 w-0.5 origin-top rounded-full bg-white/35"
+                />
+                <ol className="space-y-2 pl-4 md:pl-5">
+                  {daily.map((item, index) => {
+                    const jam = clock(item.waktu);
+                    return (
+                      <li
+                        key={`${day}-${item.nama}`}
+                        data-band
+                        className={`grid gap-2 rounded-md px-5 py-5 transition-colors hover:bg-white/20 md:grid-cols-12 md:items-baseline md:gap-6 md:px-7 ${
+                          index % 2 === 0 ? "bg-white/6" : "bg-white/14"
+                        }`}
+                      >
+                        {/* Penanda jam: titik waktu dalam chip bergaris rambut.
+                            Baris tanpa jam tetap memegang kolomnya agar larik
+                            sejajar. */}
+                        <p className="t-small tabular-nums font-semibold md:col-span-2">
+                          {jam ? (
+                            <span className="inline-flex rounded-md border border-white/40 bg-white/10 px-3 py-1.5">
+                              {jam}
+                            </span>
+                          ) : null}
+                        </p>
+                        <p className="t-statement md:col-span-4">{item.nama}</p>
+                        <p className="t-body text-white md:col-span-6">{item.deskripsi}</p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             )}
 
             {annual.length > 0 && (

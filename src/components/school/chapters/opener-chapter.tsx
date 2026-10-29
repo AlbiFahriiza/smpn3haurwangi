@@ -3,13 +3,17 @@
 import Image from "next/image";
 import type { Field, NavTheme } from "@/components/motion/chapter-theme";
 import { Chapter, Inner } from "./chapter";
-import { Reveal } from "@/components/motion/reveal";
+import { Reveal, PeelText } from "@/components/motion/reveal";
 
 /**
  * Pembuka halaman selain beranda: satu bidang warna datar, judul besar, satu
  * paragraf pengantar, lalu satu foto sekolah selebar halaman. Bentuknya sama
  * dengan bab pembuka beranda — judul yang memimpin, bukan kartu — dan fotonya
  * memberi layar pertama satu hal yang benar-benar milik sekolah ini.
+ *
+ * Judul masuk dengan "kupas topeng" (PeelText): tiap baris terangkat dari
+ * balik tepi bawahnya sendiri, bukan sekadar memudar — satu bahasa gerak
+ * dengan hero beranda.
  */
 export function OpenerChapter({
   id,
@@ -35,10 +39,10 @@ export function OpenerChapter({
   return (
     <Chapter id={id} field={field} nav={nav} pad={pad}>
       <Inner>
+        <h1 data-opener className="t-head max-w-[20ch]">
+          <PeelText lines={[judul]} />
+        </h1>
         <Reveal stagger={0.09}>
-          <h1 data-reveal-item className="t-head max-w-[20ch]">
-            {judul}
-          </h1>
           {pengantar ? (
             <p data-reveal-item className="t-body field-soft mt-7 max-w-[62ch]">
               {pengantar}

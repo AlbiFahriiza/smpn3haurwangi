@@ -3,16 +3,20 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
+import { Flip } from "gsap/Flip";
 import { useGSAP } from "@gsap/react";
 import type { GalleryItem, SiteContent } from "@/lib/content";
 import { Chapter, Inner } from "../chapters/chapter";
 import { Reveal } from "@/components/motion/reveal";
+import { GERAK, flipBetween } from "@/components/motion/morph";
+import { JejakPointer, Pegas, proyeksiMomentum, tahanKaret } from "../galeri-pegas";
+import { useTekan } from "../kontak-tekan";
 import { OpenerChapter } from "../chapters/opener-chapter";
 import { KontakChapter } from "../chapters/kontak-chapter";
 import { BIDANG_PEMBUKA } from "@/lib/chapter-fields";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-gsap.registerPlugin(useGSAP);
+gsap.registerPlugin(Flip, useGSAP);
 
 /**
  * Bentuk petak diulang dalam satu pola enam langkah supaya deretannya tidak
@@ -35,10 +39,6 @@ const PITA = [
   "bg-line text-ink",
 ];
 
-/** Durasi gerak lightbox (detik), dipakai bersama oleh buka dan tutup. */
-const MASUK = 0.55;
-const MENUTUP = 0.42;
-
 export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
   const gallery = content.gallery;
   const semua = gallery?.items ?? [];
@@ -46,7 +46,6 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
 
   const [pilih, setPilih] = useState("Semua");
   const [buka, setBuka] = useState<number | null>(null);
-  const [asal, setAsal] = useState<DOMRect | null>(null);
 
   const saringRef = useRef<HTMLDivElement>(null);
   const blokRef = useRef<HTMLSpanElement>(null);
@@ -58,6 +57,16 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
   const tanpaGerakRef = useRef(false);
   const kotakRef = useRef<HTMLDivElement | null>(null);
   const ketRef = useRef<HTMLElement | null>(null);
+  // Elemen thumbnail pemanggil lightbox. Disimpan sebagai elemen (bukan rect)
+  // supaya posisi diukur hidup: saat morph masuk thumbnail mungkin masih
+  // menyelesaikan umpan balik tekan, dan saat menutup rect-nya selalu segar
+  // berapa pun jendela berganti ukuran.
+  const asalElRef = useRef<HTMLElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const flipStateRef = useRef<Flip.FlipState | null>(null);
+  const flipTlRef = useRef<gsap.core.Timeline | null>(null);
+  // Pegas navigasi gesek lightbox; dipakai bersama oleh tab dan isi dialog.
+  const pegasRef = useRef<Pegas>(new Pegas());
 
   const tersaring = useMemo(
     () => (pilih === "Semua" ? semua : semua.filter((item) => item.kategori === pilih)),
@@ -71,6 +80,14 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
       ),
     [kategori, semua],
   );
+
+  // Peta src ke urutan tampil: petak tidak pernah lepas dari dokumen saat
+  // filter berganti, jadi pola bentuk dan warna mengikuti urutan yang tampak.
+  const indeksTampak = useMemo(() => {
+    const peta = new Map<string, number>();
+    tersaring.forEach((item, urutan) => peta.set(item.src, urutan));
+    return peta;
+  }, [tersaring]);
 
   // Pengguna yang meminta gerak minimal: semua animasi di halaman ini memeriksa
   // nilai ref ini lalu menampilkan hasil akhir seketika.
@@ -138,6 +155,82 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     };
   }, [pilih, letakkanBlok]);
 
+  /** Selesaikan flip yang sedang jalan: lompat ke akhir dan bersihkan gayanya. */
+  const pulihkanFlip = useCallback(() => {
+    const tl = flipTlRef.current;
+    flipTlRef.current = null;
+    tl?.revert();
+  }, []);
+
+  /**
+   * Ganti kategori dengan transisi tata letak (Flip): petak yang tinggal
+   * meluncur ke slot barunya, yang keluar memudar cepat, yang masuk memudar
+   * tumbuh. State ditangkap sebelum render; Flip.from dimainkan setelah DOM
+   * berganti. Ganti kategori lagi di tengah jalan aman: flip lama selesai
+   * seketika dulu (revert) supaya tangkapan baru mulai dari posisi diam.
+   */
+  const gantiFilter = (nama: string) => {
+    if (nama === pilih) return;
+    pulihkanFlip();
+    setBuka(null);
+    const grid = gridRef.current;
+    if (!grid || tanpaGerakRef.current) {
+      setPilih(nama);
+      return;
+    }
+    // Diamkan dulu animasi apung di petak (Reveal masuk, umpan balik tekan)
+    // supaya tangkapan state tidak mewarisi posisi setengah jalan.
+    grid.querySelectorAll("[data-galeri-item]").forEach((el) => {
+      gsap.getTweensOf(el).forEach((tw) => {
+        tw.progress(1);
+        tw.kill();
+      });
+    });
+    flipStateRef.current = Flip.getState(grid.querySelectorAll("[data-galeri-item]"));
+    setPilih(nama);
+  };
+
+  useGSAP(
+    () => {
+      const state = flipStateRef.current;
+      flipStateRef.current = null;
+      if (!state) return;
+      const grid = gridRef.current;
+      if (!grid || tanpaGerakRef.current) return; // hasil akhir sudah ada di DOM
+      // absoluteOnLeave: hanya petak yang keluar yang diangkat absolute
+      // sebagai hantu sementara; yang tinggal dan yang masuk tetap di aliran
+      // di posisi akhirnya sehingga tinggi kisi tidak pernah kolaps.
+      flipTlRef.current = Flip.from(state, {
+        duration: GERAK.sedang,
+        ease: GERAK.ease,
+        scale: true,
+        absoluteOnLeave: true,
+        onEnter: (els) =>
+          gsap.fromTo(
+            els,
+            { autoAlpha: 0, scale: 0.92 },
+            {
+              autoAlpha: 1,
+              scale: 1,
+              duration: 0.32,
+              ease: "power2.out",
+              stagger: { amount: 0.22 },
+              overwrite: "auto",
+            },
+          ),
+        onLeave: (els) =>
+          gsap.to(els, {
+            autoAlpha: 0,
+            scale: 0.94,
+            duration: 0.2,
+            ease: "power2.in",
+            overwrite: "auto",
+          }),
+      });
+    },
+    { scope: gridRef, dependencies: [tersaring] },
+  );
+
   const geser = (arah: 1 | -1) => {
     const jumlah = tersaring.length;
     if (jumlah === 0 || menutupRef.current) return;
@@ -145,10 +238,8 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     setBuka((kini) => (kini === null ? kini : (kini + arah + jumlah) % jumlah));
   };
 
-  const bukaFoto = (index: number, kotakAsal: HTMLElement) => {
-    // Rect thumbnail dicatat sebelum dialog mount; guliran terkunci selama
-    // lightbox terbuka sehingga rect ini tetap sahih saat ditutup.
-    setAsal(kotakAsal.getBoundingClientRect());
+  const bukaFoto = (index: number, elemenAsal: HTMLElement) => {
+    asalElRef.current = elemenAsal;
     setBuka(index);
   };
 
@@ -156,27 +247,29 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     menutupTweenRef.current?.kill();
     menutupTweenRef.current = null;
     menutupRef.current = false;
-    setAsal(null);
+    asalElRef.current = null;
     setBuka(null);
   };
 
   /**
    * Semua permintaan tutup (Escape, tombol X, klik di luar) melewati sini.
-   * Dialog baru benar-benar ditutup setelah fotonya menyusut kembali ke rect
+   * Dialog baru benar-benar ditutup setelah fotonya menyusut kembali ke
    * thumbnail asalnya; selama itu dialog tetap terbuka supaya fokus terkunci.
    */
   const mintaTutup = () => {
     if (buka === null || menutupRef.current) return;
     menutupRef.current = true;
+    pegasRef.current.berhenti();
     const kotak = kotakRef.current;
-    const rectAsal = asal;
-    if (!kotak || !rectAsal || tanpaGerakRef.current) {
+    const asalEl = asalElRef.current;
+    const rectAsal = asalEl && asalEl.isConnected ? asalEl.getBoundingClientRect() : null;
+    if (!kotak || !rectAsal || rectAsal.width < 1 || tanpaGerakRef.current) {
       selesaiTutup();
       return;
     }
-    // Kotak mungkin masih di tengah animasi (FLIP masuk belum selesai lalu
-    // pengguna menekan Escape): ukur lewat nilai transform GSAP supaya target
-    // penutupan dihitung dari posisi tata letak aslinya, bukan posisi visual.
+    // Kotak mungkin masih di tengah animasi (morph masuk, pegas, atau sedang
+    // ditarik): ukur lewat nilai transform GSAP supaya target penutupan
+    // dihitung dari posisi tata letak aslinya, bukan posisi visual.
     const r = kotak.getBoundingClientRect();
     const curX = gsap.getProperty(kotak, "x") as number;
     const curY = gsap.getProperty(kotak, "y") as number;
@@ -186,6 +279,9 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     const tinggiAsli = r.height / (curSY || 1);
     const tengahAsliX = r.left + r.width / 2 - curX;
     const tengahAsliY = r.top + r.height / 2 - curY;
+    // Skala seragam mencerminkan morph masuk (flipBetween "seragam"): foto
+    // menyusut mengecil ke thumbnail tanpa distorsi rasio.
+    const skalaTutup = (rectAsal.width / lebarAsli + rectAsal.height / tinggiAsli) / 2;
     if (ketRef.current) {
       gsap.to(ketRef.current, {
         autoAlpha: 0,
@@ -198,10 +294,10 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     menutupTweenRef.current = gsap.to(kotak, {
       x: rectAsal.left + rectAsal.width / 2 - tengahAsliX,
       y: rectAsal.top + rectAsal.height / 2 - tengahAsliY,
-      scaleX: rectAsal.width / lebarAsli,
-      scaleY: rectAsal.height / tinggiAsli,
-      duration: MENUTUP,
-      ease: "power3.inOut",
+      scaleX: skalaTutup,
+      scaleY: skalaTutup,
+      duration: GERAK.sedang,
+      ease: GERAK.ease,
       overwrite: "auto",
       onComplete: selesaiTutup,
     });
@@ -210,6 +306,7 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
   useEffect(
     () => () => {
       menutupTweenRef.current?.kill();
+      pegasRef.current.berhenti();
     },
     [],
   );
@@ -286,10 +383,7 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
                   ref={(el) => {
                     chipRefs.current[index] = el;
                   }}
-                  onClick={() => {
-                    setPilih(nama);
-                    setBuka(null);
-                  }}
+                  onClick={() => gantiFilter(nama)}
                   aria-pressed={sedang}
                   className={`t-small relative z-10 rounded-md px-5 py-3 font-semibold transition-[color,background-color,transform] duration-200 active:translate-y-px ${
                     sedang ? "bg-abyss text-white" : "field-soft hover:bg-abyss/6"
@@ -302,57 +396,24 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
             })}
           </div>
 
-          {tersaring.length > 0 ? (
-            <Reveal
-              key={pilih}
-              className="mt-10"
-              y={24}
-              stagger={0.06}
-            >
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-12 md:gap-2.5">
-                {tersaring.map((item, index) => (
-                  <button
-                    key={item.src}
-                    type="button"
-                    data-reveal-item
-                    onClick={(event) => bukaFoto(index, event.currentTarget)}
-                    aria-label={`Perbesar foto: ${item.judul}`}
-                    className={`group relative block overflow-hidden rounded-xl text-left active:translate-y-px ${
-                      POLA[index % POLA.length]
-                    }`}
-                  >
-                    <Image
-                      src={item.src}
-                      alt={item.judul}
-                      fill
-                      sizes="(min-width: 768px) 46vw, 92vw"
-                      priority={index < 2}
-                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-                    />
-                    {/* Keterangan naik dari bawah hanya untuk penunjuk yang bisa
-                        mengarah (hover); di layar sentuh dan tanpa JavaScript ia
-                        memang tampil sejak awal. */}
-                    <span
-                      className={`t-body absolute inset-x-0 bottom-0 flex items-baseline justify-between gap-4 px-4 py-3 font-semibold transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] [@media(hover:hover)]:translate-y-full [@media(hover:hover)]:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 ${
-                        PITA[index % PITA.length]
-                      }`}
-                    >
-                      <span className="truncate">{item.judul}</span>
-                      {item.tanggal && item.tanggal !== "-" ? (
-                        <span className="t-small tabular-nums">{item.tanggal}</span>
-                      ) : (
-                        <span className="t-small tabular-nums">{item.kategori}</span>
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </Reveal>
-          ) : (
+          <Reveal className="mt-10" y={24} stagger={0.06}>
+            <div ref={gridRef} className="grid grid-cols-1 gap-2 md:grid-cols-12 md:gap-2.5">
+              {semua.map((item) => (
+                <KotakFoto
+                  key={item.src}
+                  item={item}
+                  indeks={indeksTampak.get(item.src) ?? -1}
+                  tampak={indeksTampak.has(item.src)}
+                  onBuka={bukaFoto}
+                />
+              ))}
+            </div>
+          </Reveal>
+          {tersaring.length === 0 ? (
             <p className="t-body field-soft mt-10">
               Belum ada foto pada kategori ini. Guru dapat menambahkannya lewat panel admin.
             </p>
-          )}
+          ) : null}
         </Inner>
       </Chapter>
 
@@ -372,9 +433,11 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
               item={aktif}
               nomor={(buka ?? 0) + 1}
               jumlah={tersaring.length}
-              asal={asal}
+              asalElRef={asalElRef}
               arahRef={arahRef}
               tanpaGerakRef={tanpaGerakRef}
+              menutupRef={menutupRef}
+              pegasRef={pegasRef}
               kotakRef={kotakRef}
               ketRef={ketRef}
               onGeser={geser}
@@ -387,18 +450,87 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
 }
 
 /**
- * Isi lightbox: panel foto + panel keterangan. FLIP masuk dijalankan di sini
+ * Satu petak galeri. Petak tidak pernah lepas dari dokumen saat kategori
+ * berganti; ia hanya disembunyikan (display:none) supaya Flip dapat mengenali
+ * elemen yang "masuk" dan "keluar" kategori lalu menganimasikannya. Hover:
+ * foto membesar 1.03 dan pita keterangan naik dari bawah. Tekan: useTekan
+ * "padat" menurunkan dan mengecilkan petak seketika saat pointer menyentuh,
+ * kembali dengan pegas kecil saat dilepas.
+ */
+function KotakFoto({
+  item,
+  indeks,
+  tampak,
+  onBuka,
+}: {
+  item: GalleryItem;
+  indeks: number;
+  tampak: boolean;
+  onBuka: (indeks: number, elemenAsal: HTMLElement) => void;
+}) {
+  const tekan = useTekan("padat");
+  return (
+    <button
+      type="button"
+      data-galeri-item
+      data-reveal-item
+      data-flip-id={item.src}
+      onClick={(event) => tampak && onBuka(indeks, event.currentTarget)}
+      aria-label={`Perbesar foto: ${item.judul}`}
+      className={`group relative block overflow-hidden rounded-xl text-left active:translate-y-px ${
+        tampak ? POLA[indeks % POLA.length] : "hidden"
+      }`}
+      {...tekan}
+    >
+      <Image
+        src={item.src}
+        alt={item.judul}
+        fill
+        sizes="(min-width: 768px) 46vw, 92vw"
+        priority={tampak && indeks < 2}
+        className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+      />
+      {/* Keterangan naik dari bawah hanya untuk penunjuk yang bisa
+          mengarah (hover); di layar sentuh dan tanpa JavaScript ia
+          memang tampil sejak awal. */}
+      <span
+        className={`t-body absolute inset-x-0 bottom-0 flex items-baseline justify-between gap-4 px-4 py-3 font-semibold transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] [@media(hover:hover)]:translate-y-full [@media(hover:hover)]:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 ${
+          tampak ? PITA[indeks % PITA.length] : ""
+        }`}
+      >
+        <span className="truncate">{item.judul}</span>
+        {item.tanggal && item.tanggal !== "-" ? (
+          <span className="t-small tabular-nums">{item.tanggal}</span>
+        ) : (
+          <span className="t-small tabular-nums">{item.kategori}</span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Isi lightbox: panel foto + panel keterangan. Morph masuk dijalankan di sini
  * (bukan di induknya) supaya terpicu pada bingkai pemasangan portal dialog,
  * sebelum cat pertama: foto terlihat langsung berangkat dari posisi thumbnail
- * tanpa kedipan di posisi akhir.
+ * (flipBetween, elemen bersama) tanpa kedipan di posisi akhir.
+ *
+ * Navigasi antar foto: tombol, papan ketik, atau gesekan horizontal. Gesekan
+ * mengikuti jari 1:1 (JejakPointer), berhenti lentur di ujung daftar
+ * (tahanKaret), dan pelepasan mewariskan kecepatan jari ke pegas penyelesai
+ * (Pegas + proyeksiMomentum) sehingga tidak ada "dinding" antara jari dan
+ * animasi. Semua tahap bisa dicegat: menyentuh foto di tengah pegas
+ * menghentikannya dan tarikan baru mulai dari posisi tampilan saat itu.
  */
 function FotoLightbox({
   item,
   nomor,
   jumlah,
-  asal,
+  asalElRef,
   arahRef,
   tanpaGerakRef,
+  menutupRef,
+  pegasRef,
   kotakRef,
   ketRef,
   onGeser,
@@ -406,15 +538,29 @@ function FotoLightbox({
   item: GalleryItem;
   nomor: number;
   jumlah: number;
-  asal: DOMRect | null;
+  asalElRef: React.RefObject<HTMLElement | null>;
   arahRef: React.RefObject<1 | -1>;
   tanpaGerakRef: React.RefObject<boolean>;
+  menutupRef: React.RefObject<boolean>;
+  pegasRef: React.RefObject<Pegas>;
   kotakRef: React.RefObject<HTMLDivElement | null>;
   ketRef: React.RefObject<HTMLElement | null>;
   onGeser: (arah: 1 | -1) => void;
 }) {
   const scope = useRef<HTMLElement>(null);
   const pertamaRef = useRef(true);
+  // Benar setelah foto berhenti di tempatnya; tarikan baru boleh mulai.
+  const siapRef = useRef(false);
+  // Serah-terima kecepatan jari dari gesekan ke animasi foto berikutnya.
+  const serahRef = useRef<{ arah: 1 | -1; vx: number } | null>(null);
+  const tarikRef = useRef<{
+    id: number;
+    sx: number;
+    sy: number;
+    base: number;
+    sumbu: 0 | 1 | -1;
+  } | null>(null);
+  const jejakRef = useRef(new JejakPointer());
 
   useGSAP(
     () => {
@@ -428,72 +574,208 @@ function FotoLightbox({
 
       if (pertamaRef.current) {
         pertamaRef.current = false;
-        if (!asal || tanpaGerakRef.current) {
+        siapRef.current = true;
+        if (tanpaGerakRef.current || !asalElRef.current) {
           gsap.set(kotak, { x: 0, y: 0, scaleX: 1, scaleY: 1, autoAlpha: 1 });
           gsap.set(ket, { y: 0, autoAlpha: 1 });
           if (tombolX) gsap.set(tombolX, { autoAlpha: 1 });
           return;
         }
-        const kini = kotak.getBoundingClientRect();
-        const garis = gsap.timeline();
-        // Foto MEMBESAR dari rect thumbnail (FLIP manual). Skala X dan Y
-        // dipisah supaya rasio thumbnail yang beda tetap terbang mulus.
-        garis
-          .fromTo(
-            kotak,
-            {
-              x: asal.left + asal.width / 2 - (kini.left + kini.width / 2),
-              y: asal.top + asal.height / 2 - (kini.top + kini.height / 2),
-              scaleX: asal.width / kini.width,
-              scaleY: asal.height / kini.height,
-              transformOrigin: "50% 50%",
-            },
-            { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: MASUK, ease: "expo.out" },
-          )
-          // Keterangan menyusul menumpang saat foto 60% jalan (overlapping
-          // action), bukan menunggu foto selesai penuh.
-          .fromTo(
-            ket,
-            { autoAlpha: 0, y: 18 },
-            { autoAlpha: 1, y: 0, duration: 0.32, ease: "power3.out" },
-            MASUK * 0.6,
-          );
+        // Foto BERMORPH dari thumbnail (elemen bersama, skala seragam supaya
+        // isi tidak terdistorsi). flipBetween membaca rect hidup kedua elemen,
+        // bisa dicegat (overwrite auto), dan lompat jika gerak dikurangkan.
+        const morph = flipBetween(asalElRef.current, kotak, {
+          durasi: GERAK.panjang,
+          ease: GERAK.ease,
+          skala: "seragam",
+          selesai: () => {
+            siapRef.current = true;
+          },
+        });
+        if (!morph) siapRef.current = true;
+        // Keterangan dan tombol tutup menyusul menumpang saat foto 60% jalan
+        // (overlapping action), bukan menunggu foto selesai penuh.
+        gsap.fromTo(
+          ket,
+          { autoAlpha: 0, y: 18 },
+          { autoAlpha: 1, y: 0, duration: 0.32, ease: "power3.out", delay: GERAK.panjang * 0.6 },
+        );
         if (tombolX) {
-          garis.fromTo(
+          gsap.fromTo(
             tombolX,
             { autoAlpha: 0 },
-            { autoAlpha: 1, duration: 0.24 },
-            MASUK * 0.6 + 0.05,
+            { autoAlpha: 1, duration: 0.24, delay: GERAK.panjang * 0.6 + 0.05 },
           );
         }
         return;
       }
 
-      // Pergantian foto di dalam lightbox: saling geser singkat mengikuti arah,
-      // transform/opacity saja sehingga tata letak tidak pernah bergeser.
-      if (tanpaGerakRef.current) return;
+      // ---- Pergantian foto di dalam lightbox (tombol/papan ketik/gesek) ----
+      // Interupsi yang mungkin masih jalan dibersihkan dulu: morph masuk yang
+      // belum selesai dilompati ke identitas supaya foto baru mulai dari nol.
+      gsap.killTweensOf(kotak);
+      gsap.set(kotak, { x: 0, y: 0, scaleX: 1, scaleY: 1, autoAlpha: 1 });
+      gsap.killTweensOf(ket);
+      gsap.set(ket, { y: 0, autoAlpha: 1 });
+      if (tombolX) {
+        gsap.killTweensOf(tombolX);
+        gsap.set(tombolX, { autoAlpha: 1 });
+      }
+      siapRef.current = true;
+      if (tanpaGerakRef.current) return; // langsung tampil
+      pegasRef.current.berhenti();
+      const serah = serahRef.current;
+      serahRef.current = null;
+      const arah = serah?.arah ?? arahRef.current;
+      const lebar = kotak.offsetWidth || 480;
+      // Gesekan: foto berikutnya datang dari jauh membawa kecepatan jari;
+      // tombol/papan ketik: saling geser singkat mengikuti arah.
+      const jarak = serah ? Math.min(lebar * 0.7, 560) : 48;
       gsap.fromTo(
         kotak,
-        { x: arahRef.current * 40, autoAlpha: 0 },
-        { x: 0, autoAlpha: 1, duration: 0.34, ease: "power3.out", overwrite: "auto" },
+        { autoAlpha: serah ? 0.25 : 0 },
+        { autoAlpha: 1, duration: 0.2, ease: "power1.out" },
+      );
+      pegasRef.current.mulai(
+        {
+          x: {
+            posisi: arah * jarak,
+            kecepatan: serah ? gsap.utils.clamp(-2800, 2800, serah.vx) : 0,
+            sasaran: 0,
+            eps: 0.35,
+            tulis: (n) => gsap.set(kotak, { x: n }),
+          },
+        },
+        serah ? { respons: 0.34, redaman: 0.88 } : { respons: 0.3, redaman: 1 },
       );
       gsap.fromTo(
         ket,
-        { autoAlpha: 0.3 },
-        { autoAlpha: 1, duration: 0.3, ease: "power2.out", overwrite: "auto" },
+        { autoAlpha: 0.35 },
+        { autoAlpha: 1, duration: 0.3, ease: "power2.out" },
       );
+      return () => {
+        pegasRef.current.berhenti();
+      };
     },
     { scope, dependencies: [item.src] },
   );
+
+  const mulaiTarik = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    if (!siapRef.current || menutupRef.current) return;
+    const kotak = kotakRef.current;
+    if (!kotak) return;
+    kotak.setPointerCapture(event.pointerId);
+    // Pegas yang sedang jalan dihentikan dan tarikan mulai dari posisi
+    // tampilan sekarang: animasi boleh dicegat kapan saja.
+    pegasRef.current.berhenti();
+    tarikRef.current = {
+      id: event.pointerId,
+      sx: event.clientX,
+      sy: event.clientY,
+      base: (gsap.getProperty(kotak, "x") as number) || 0,
+      sumbu: 0,
+    };
+    jejakRef.current.reset();
+    jejakRef.current.catat(event.clientX, event.clientY);
+  };
+
+  const gerakTarik = (event: React.PointerEvent<HTMLDivElement>) => {
+    const t = tarikRef.current;
+    const kotak = kotakRef.current;
+    if (!t || !kotak || event.pointerId !== t.id) return;
+    if (menutupRef.current) return; // penutupan sedang jalan: jangan melawan tween-nya
+    jejakRef.current.catat(event.clientX, event.clientY);
+    const dx = event.clientX - t.sx;
+    const dy = event.clientY - t.sy;
+    // Hysteresis arah: baru pastu horizontal setelah melewati ambang,
+    // supaya ketukan kecil tidak membuat foto bergoyang.
+    if (t.sumbu === 0) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) t.sumbu = 1;
+      else if (Math.abs(dy) > 8) t.sumbu = -1;
+      if (t.sumbu === 0) return;
+    }
+    if (t.sumbu !== 1) return;
+    const indeks = nomor - 1;
+    const lebar = kotak.offsetWidth || 1;
+    let x = t.base + dx;
+    // Ujung daftar: resistensi karet, makin jauh makin berat ditarik.
+    if ((x > 0 && indeks === 0) || (x < 0 && indeks === jumlah - 1)) {
+      x = tahanKaret(x, lebar);
+    }
+    gsap.set(kotak, { x });
+  };
+
+  const lepasTarik = (event: React.PointerEvent<HTMLDivElement>) => {
+    const t = tarikRef.current;
+    const kotak = kotakRef.current;
+    if (!t || !kotak || event.pointerId !== t.id) return;
+    tarikRef.current = null;
+    if (menutupRef.current) return; // penutupan menang: lepasan ini batal
+    const kini = (gsap.getProperty(kotak, "x") as number) || 0;
+    if (t.sumbu !== 1) {
+      // Bukan gesekan horizontal; kalau pegas sempat dicegat, lanjutkan pulang.
+      if (kini !== 0 && !tanpaGerakRef.current) {
+        pegasRef.current.mulai(
+          {
+            x: { posisi: kini, sasaran: 0, eps: 0.35, tulis: (n) => gsap.set(kotak, { x: n }) },
+          },
+          { respons: 0.3, redaman: 1 },
+        );
+      }
+      return;
+    }
+    const { vx } = jejakRef.current.kecepatan();
+    const indeks = nomor - 1;
+    const lebar = kotak.offsetWidth || 1;
+    // Ke mana gerak masih meluncur kalau jari tidak lagi menahan.
+    const mendarat = kini + proyeksiMomentum(vx);
+    let arah: 1 | -1 | 0 = 0;
+    if (Math.abs(vx) > 240) arah = vx < 0 ? 1 : -1;
+    else if (Math.abs(kini) > lebar * 0.3) arah = kini < 0 ? 1 : -1;
+    else if (Math.abs(mendarat) > lebar * 0.28) arah = mendarat < 0 ? 1 : -1;
+    if (arah !== 0) {
+      const adaTetangga = arah === 1 ? indeks < jumlah - 1 : indeks > 0;
+      if (adaTetangga) {
+        // Komit: foto berganti dan kecepatan jari diwariskan ke animasinya.
+        serahRef.current = { arah, vx };
+        onGeser(arah);
+        return;
+      }
+    }
+    // Batalkan: pegas pulang ke tengah mewarisi kecepatan jari.
+    if (tanpaGerakRef.current) {
+      gsap.set(kotak, { x: 0 });
+      return;
+    }
+    pegasRef.current.mulai(
+      {
+        x: { posisi: kini, kecepatan: vx, sasaran: 0, eps: 0.35, tulis: (n) => gsap.set(kotak, { x: n }) },
+      },
+      { respons: 0.32, redaman: 0.85 },
+    );
+  };
 
   return (
     <figure ref={scope}>
       <div
         ref={kotakRef}
         data-foto-box
-        className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-deep will-change-transform"
+        onPointerDown={mulaiTarik}
+        onPointerMove={gerakTarik}
+        onPointerUp={lepasTarik}
+        onPointerCancel={lepasTarik}
+        onLostPointerCapture={lepasTarik}
+        className="relative aspect-[4/3] w-full cursor-grab touch-pan-y overflow-hidden rounded-xl bg-deep will-change-transform"
       >
-        <Image src={item.src} alt={item.judul} fill sizes="90vw" className="object-contain" />
+        <Image
+          src={item.src}
+          alt={item.judul}
+          fill
+          sizes="90vw"
+          draggable={false}
+          className="object-contain"
+        />
       </div>
       <figcaption
         ref={ketRef}

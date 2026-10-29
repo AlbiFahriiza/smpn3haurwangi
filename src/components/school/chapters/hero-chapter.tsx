@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { Identity, StudentsSection } from "@/lib/content";
 import { ROUTES } from "@/lib/site";
+import { useTekan } from "../kontak-tekan";
 
 const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
 
@@ -23,6 +24,9 @@ export function HeroChapter({
   students?: StudentsSection;
 }) {
   const scope = useRef<HTMLElement>(null);
+  // Reaksi tekan seketika (pointer-down, bukan menunggu klik) untuk kedua
+  // aksi utama; sama dengan tombol aksi di batang navigasi dan bab kontak.
+  const tekanCta = useTekan();
 
   const nama = identity?.nama ?? "SMP Negeri 3 Haurwangi";
   const status = (identity?.status ?? "Negeri").toLowerCase();
@@ -123,16 +127,24 @@ export function HeroChapter({
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
             href={ROUTES.kontak.path}
-            className="t-small inline-flex items-center rounded-lg bg-foam px-6 py-3 font-semibold text-abyss transition hover:-translate-y-px hover:bg-sky active:translate-y-px"
+            {...tekanCta}
+            className="t-small inline-flex items-center rounded-lg bg-foam px-6 py-3 font-semibold text-abyss transition-[background-color,translate] duration-200 hover:-translate-y-px hover:bg-sky"
           >
-            Hubungi Sekolah
+            {/* Label bergulir saat disorot (globals.css .roll), satu bahasa
+                gerak dengan tombol aksi navigasi dan bab kontak. */}
+            <span className="roll" data-roll="Hubungi Sekolah">
+              <span className="roll-face">Hubungi Sekolah</span>
+            </span>
           </Link>
           <a
             href="#fasilitas-sekolah"
             onClick={lompatKeDenah}
-            className="t-small inline-flex items-center rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:-translate-y-px hover:border-white/80 hover:bg-white/10 active:translate-y-px"
+            {...tekanCta}
+            className="t-small inline-flex items-center rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition-[border-color,background-color,translate] duration-200 hover:-translate-y-px hover:border-white/80 hover:bg-white/10"
           >
-            Lihat Denah Sekolah
+            <span className="roll" data-roll="Lihat Denah Sekolah">
+              <span className="roll-face">Lihat Denah Sekolah</span>
+            </span>
           </a>
         </div>
       </div>

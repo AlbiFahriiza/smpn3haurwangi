@@ -13,7 +13,8 @@ import type {
   VisionSection,
 } from "@/lib/content";
 import { Chapter, Inner } from "./chapter";
-import { Reveal } from "@/components/motion/reveal";
+import { PeelText, Reveal } from "@/components/motion/reveal";
+import { useTekan } from "../kontak-tekan";
 
 const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
 
@@ -191,11 +192,14 @@ export function SejarahChapter({
 
               <div className="lg:col-span-5">
                 {kutipan ? (
-                  <figure data-reveal-item className="lg:sticky lg:top-28">
+                  /* Satu-satunya momen kupas di halaman ini: kutipan sambutan
+                     kepala sekolah terangkat dari balik tepi bawahnya
+                     sendiri (PeelText), selaras judul pembuka halaman. */
+                  <figure className="lg:sticky lg:top-28">
                     <blockquote className="t-statement max-w-[26ch] font-serif italic">
-                      {kutipan}
+                      <PeelText lines={[kutipan]} />
                     </blockquote>
-                    <figcaption className="t-small field-soft mt-5">
+                    <figcaption data-reveal-item className="t-small field-soft mt-5">
                       {identity?.kepalaSekolah ?? "Agus Solihin"}, Kepala Sekolah
                     </figcaption>
                   </figure>
@@ -217,6 +221,7 @@ export function IdentitasChapter({
   contact?: ContactSection;
 }) {
   const id = identity;
+  const tekanSurel = useTekan("halus");
   const surel = contact?.email ?? id?.email ?? "smpn3_haurwangi@yahoo.com";
   const surelUrl = `mailto:${surel}?subject=Pertanyaan%20tentang%20SMP%20Negeri%203%20Haurwangi`;
   const alamatLengkap = [
@@ -239,12 +244,13 @@ export function IdentitasChapter({
     ["Operator sekolah", id?.operator ?? "Risha Agustiansyah"],
     [
       "Surel resmi",
-      /* Satu-satunya saluran yang bisa diklik di tabel ini: tekan turun 1px
-         (anticipation) sebelum surel terbuka. */
+      /* Satu-satunya saluran yang bisa diklik di tabel ini: meredup sekejap
+         saat disentuh (useTekan halus) sebelum surel terbuka. */
       <a
         key="surel"
         href={surelUrl}
-        className="inline-block rounded-md break-words underline decoration-white/40 underline-offset-4 transition-[text-decoration-color,translate] duration-200 hover:decoration-white active:translate-y-px"
+        {...tekanSurel}
+        className="inline-block rounded-md break-words underline decoration-white/40 underline-offset-4 transition-[text-decoration-color] duration-200 hover:decoration-white"
       >
         {surel}
       </a>,
@@ -270,7 +276,7 @@ export function IdentitasChapter({
             </p>
           </Reveal>
 
-          <Reveal className="lg:col-span-8" stagger={0.05}>
+          <Reveal className="lg:col-span-8" stagger={0.05} y={14}>
             <DaftarNilai baris={baris} />
           </Reveal>
         </div>
@@ -363,7 +369,32 @@ export function VisiMisiChapter({ vision }: { vision?: VisionSection }) {
 /** Urutan kelompok mengikuti jabatan pada data, bukan urutan yang dikarang. */
 const URUTAN_JABATAN = ["Kepala Sekolah", "Guru", "Operator Sekolah"];
 
+/**
+ * Teks yang menggulir kecil saat kartu guru disorot: wajah asli terangkat keluar
+ * lewat atas, salinannya masuk dari bawah. Gerak dan temponya sama dengan label
+ * tombol .roll global (300ms, --ease-smooth), tetapi dipicu dari kartunya supaya
+ * satu sorotan menggerakkan foto, nama, dan peran sekaligus. Salinan aria-hidden
+ * menjaga pembaca layar tidak membaca dua kali; motion-safe mematikan gulir bagi
+ * pengguna yang meminta gerak dikurangi.
+ */
+function TeksGulir({ teks }: { teks: string }) {
+  return (
+    <span className="relative block overflow-hidden pb-[0.06em]">
+      <span className="block transition-transform duration-300 ease-[var(--ease-smooth)] motion-safe:group-hover:-translate-y-[105%]">
+        {teks}
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 block translate-y-[105%] transition-transform duration-300 ease-[var(--ease-smooth)] motion-safe:group-hover:translate-y-0"
+      >
+        {teks}
+      </span>
+    </span>
+  );
+}
+
 export function GuruRosterChapter({ teachers }: { teachers?: TeachersSection }) {
+  const tekanKartu = useTekan("padat");
   const semua = teachers?.items ?? [];
   const statistik = teachers?.statistik ?? [];
 
@@ -405,35 +436,43 @@ export function GuruRosterChapter({ teachers }: { teachers?: TeachersSection }) 
                 {grup.jabatan}
               </h3>
               <ul className="mt-8 grid gap-x-12 gap-y-12 lg:grid-cols-2">
-                {grup.orang.map((orang) => (
-                  <li
-                    key={orang.nama}
-                    data-reveal-item
-                    className={orang.foto ? "grid gap-6 sm:grid-cols-[8.5rem_1fr]" : ""}
-                  >
-                    {/* Garis rambut seirama latar gelap bab ini membingkai
-                        potret kecil, tanpa menambah bayangan berlapis. */}
-                    {orang.foto ? (
-                      <div className="group relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden rounded-xl bg-abyss outline outline-1 -outline-offset-1 outline-line">
-                        <Image
-                          src={orang.foto}
-                          alt={`${orang.nama}, ${orang.jabatan} SMP Negeri 3 Haurwangi`}
-                          fill
-                          sizes="8.5rem"
-                          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-                        />
+                {grup.orang.map((orang) => {
+                  const peran =
+                    orang.mapel && orang.mapel !== "-"
+                      ? `${orang.jabatan} · ${orang.mapel}`
+                      : orang.jabatan;
+                  return (
+                    <li
+                      key={orang.nama}
+                      data-reveal-item
+                      {...tekanKartu}
+                      className={orang.foto ? "group grid gap-6 sm:grid-cols-[8.5rem_1fr]" : "group"}
+                    >
+                      {/* Garis rambut seirama latar gelap bab ini membingkai
+                          potret kecil, tanpa menambah bayangan berlapis. */}
+                      {orang.foto ? (
+                        <div className="relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden rounded-xl bg-abyss outline outline-1 -outline-offset-1 outline-line">
+                          <Image
+                            src={orang.foto}
+                            alt={`${orang.nama}, ${orang.jabatan} SMP Negeri 3 Haurwangi`}
+                            fill
+                            sizes="8.5rem"
+                            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="min-w-0">
+                        <h4 className="t-statement">
+                          <TeksGulir teks={orang.nama} />
+                        </h4>
+                        <p className="t-small field-soft mt-1">
+                          <TeksGulir teks={peran} />
+                        </p>
+                        <p className="t-body mt-4 max-w-[52ch]">{orang.deskripsi}</p>
                       </div>
-                    ) : null}
-                    <div className="min-w-0">
-                      <h4 className="t-statement">{orang.nama}</h4>
-                      <p className="t-small field-soft mt-1">
-                        {orang.jabatan}
-                        {orang.mapel && orang.mapel !== "-" ? ` · ${orang.mapel}` : ""}
-                      </p>
-                      <p className="t-body mt-4 max-w-[52ch]">{orang.deskripsi}</p>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             </Reveal>
           ))}

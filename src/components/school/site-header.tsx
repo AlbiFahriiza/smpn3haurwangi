@@ -9,6 +9,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { ContactSection, Identity } from "@/lib/content";
 import { ROUTES } from "@/lib/site";
 import { useChapterTheme, type Field, type NavTheme } from "@/components/motion/chapter-theme";
+import { flipBetween, GERAK } from "@/components/motion/morph";
+import { useTekan } from "./kontak-tekan";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -51,6 +53,63 @@ const MENU: Record<NavTheme, string> = {
   dark: "outline-white/40",
 };
 
+/* ------------------------------------------------------------ tombol menu ---
+   Hamburger dua garis yang BERMORPH menjadi tanda silang, bukan berganti ikon:
+   kedua garis berputar dari posisi terkini (interruptible — GSAP membaca nilai
+   tampilan, jadi morph bisa dibalik di tengah jalan tanpa lompatan). Status
+   gerak dikurangi dihormati: garis langsung menempati posisi akhir. */
+function GarisMenu({ buka }: { buka: boolean }) {
+  const atasRef = useRef<HTMLSpanElement>(null);
+  const bawahRef = useRef<HTMLSpanElement>(null);
+  // Pemasangan pertama tidak dianimasikan: tombol "tutup" panel memang lahir
+  // langsung berbentuk silang (pasangan morph-nya di batang sedang menuju ke
+  // sana), jadi tidak ada hamburger yang terlihat berputar sendiri.
+  const pertamaRef = useRef(true);
+
+  useEffect(() => {
+    const atas = atasRef.current;
+    const bawah = bawahRef.current;
+    if (!atas || !bawah) return;
+    const langsung = pertamaRef.current && buka;
+    pertamaRef.current = false;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const durasi = langsung || mq.matches ? 0 : GERAK.sedang;
+    // Sasaran tergantung keadaan: buka = kedua garis bertemu di tengah lalu
+    // berputar menjadi silang; tutup = kembali ke posisi hamburger semula.
+    // GSAP membaca nilai tampilan terkini, jadi arah bisa dibalik kapan saja.
+    const sasaran = buka
+      ? [
+          { el: atas, nilai: { y: 9, rotate: 45 } },
+          { el: bawah, nilai: { y: -9, rotate: -45 } },
+        ]
+      : [
+          { el: atas, nilai: { y: 0, rotate: 0 } },
+          { el: bawah, nilai: { y: 0, rotate: 0 } },
+        ];
+    for (const { el, nilai } of sasaran) {
+      gsap.to(el, {
+        ...nilai,
+        duration: durasi,
+        ease: GERAK.ease,
+        overwrite: "auto",
+      });
+    }
+  }, [buka]);
+
+  return (
+    <span aria-hidden className="pointer-events-none relative block h-5 w-5">
+      <span
+        ref={atasRef}
+        className="absolute left-0 top-0 h-[2px] w-full rounded-full bg-current"
+      />
+      <span
+        ref={bawahRef}
+        className="absolute left-0 top-[18px] h-[2px] w-full rounded-full bg-current"
+      />
+    </span>
+  );
+}
+
 export function SiteHeader({
   identity,
   contact,
@@ -71,12 +130,21 @@ export function SiteHeader({
 
   const barRef = useRef<HTMLElement>(null);
   const markRef = useRef<HTMLAnchorElement>(null);
+  const markTextRef = useRef<HTMLSpanElement>(null);
   const aksiRef = useRef<HTMLAnchorElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const blockRef = useRef<HTMLSpanElement>(null);
   const linkRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const menuRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  // Sepasang lambang (batang, panel) buat morph shared element logo + judul.
+  const panelMarkRef = useRef<HTMLSpanElement>(null);
+  const panelTextRef = useRef<HTMLSpanElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const panelCloseRef = useRef<HTMLButtonElement>(null);
+
+  const tekanTautan = useTekan("halus");
+  const tekanAksi = useTekan();
 
   // Panel seluler menutupi seluruh layar: kunci gulir latar dan izinkan tutup
   // dengan Escape supaya pengguna papan tombol tidak terjebak di dalamnya.
@@ -88,9 +156,14 @@ export function SiteHeader({
     const gulirSebelumnya = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
+    // Fokus dipindahkan ke tombol tutup panel (pola dialog), lalu dikembalikan
+    // ke tombol pembuka saat panel ditutup supaya papan tombol tidak kehilangan
+    // titik pijak.
+    panelCloseRef.current?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = gulirSebelumnya;
+      menuButtonRef.current?.focus({ preventScroll: true });
     };
   }, [menuOpen]);
 
@@ -184,8 +257,14 @@ export function SiteHeader({
     }
   }, [condensed, tanpaGerak]);
 
-  // Panel seluler turun seperti tirai yang terkuak, lalu isinya menyusul satu
-  // per satu. Saat ditutup ia mengerut kembali dengan cepat.
+  /* ------------------------------------------------------ panel seluler ---
+   * Panel turun seperti tirai yang terkuak, isinya menyusul satu per satu.
+   * Lambang dan judul TIDAK ikut stagger: keduanya di-morph dari pasangannya
+   * di batang (shared element) — logo panel "lahir" tepat dari kotak logo
+   * batang, dan judul panel menyingkap selebar judul batang lalu melapang
+   * penuh menampilkan nama lengkap. Saat ditutup panel mengerut kembali
+   * dengan cepat; batang di belakangnya tidak pernah pindah, jadi lambang
+   * terasa satu benda yang sama dari buka sampai tutup. */
   useEffect(() => {
     const panel = menuRef.current;
     if (!panel) return;
@@ -206,8 +285,46 @@ export function SiteHeader({
     }
     if (tanpaGerak) {
       gsap.set(panel, { autoAlpha: 1, clipPath: "inset(0% 0% 0% 0%)" });
+      gsap.set([panelMarkRef.current, panelTextRef.current], {
+        x: 0,
+        y: 0,
+        scale: 1,
+        clipPath: "inset(0% 0% 0% 0%)",
+      });
       return;
     }
+
+    // Morph shared element: lambang + judul panel bermula dari kotak pasangannya
+    // di batang (logo mengecil/membesar mulus, termasuk saat batang sedang
+    // menyusut), berjalan seiring tirai panel.
+    flipBetween(markRef.current, panelMarkRef.current, {
+      durasi: GERAK.panjang,
+      skala: "seragam",
+      jeda: 0.05,
+    });
+    const teksBaru = flipBetween(markTextRef.current, panelTextRef.current, {
+      durasi: GERAK.panjang,
+      skala: "seragam",
+      jeda: 0.05,
+    });
+    // Judul panel menyingkap selebar judul batang dulu (clip-path dari kanan),
+    // lalu membuka penuh: teks pendek "SMPN 3 Haurwangi" tumbuh menjadi nama
+    // lengkap di tempat yang sama — transisi teks tanpa ganti baris.
+    if (teksBaru) {
+      const asal = markTextRef.current?.getBoundingClientRect();
+      const tujuan = panelTextRef.current?.getBoundingClientRect();
+      if (asal && tujuan && asal.width > 0 && tujuan.width > 0) {
+        const lebih = Math.max(0, 1 - asal.width / tujuan.width) * 100;
+        if (lebih > 1) {
+          gsap.fromTo(
+            panelTextRef.current,
+            { clipPath: `inset(0% ${lebih.toFixed(2)}% 0% 0%)` },
+            { clipPath: "inset(0% 0% 0% 0%)", duration: GERAK.panjang + 0.1, ease: GERAK.ease, delay: 0.05 },
+          );
+        }
+      }
+    }
+
     const garis = gsap.timeline();
     garis
       .set(panel, { visibility: "visible", clipPath: "inset(0% 0% 100% 0%)" })
@@ -224,6 +341,7 @@ export function SiteHeader({
       );
     return () => {
       garis.kill();
+      teksBaru?.kill();
     };
   }, [menuOpen, tanpaGerak]);
 
@@ -239,10 +357,15 @@ export function SiteHeader({
 
   const blockPath = hoverPath ?? activePath;
 
+  // Jalur blok sebelumnya: squash hanya saat BERPINDAH tautan, bukan saat
+  // magnet mengikutinya dalam satu tautan (kalau ikut, blok gemetar).
+  const lastPathRef = useRef<string | null>(null);
+
   /**
    * Satu tempat yang menggerakkan blok; magnetnya hanya menumpang di atas.
-   * Saat kursor masuk blok bergerak lebih gesit supaya label yang tintanya
-   * berbalik tidak sempat terbaca di atas bidang yang salah.
+   * Saat blok berpindah tautan ia memipih sejenak (squash) lalu mantap kembali
+   * — follow-through ala benda nyata; saat magnet menyeret di dalam satu
+   * tautan, blok hanya geser gesit tanpa memipih.
    */
   const letakkanBlok = useCallback(
     (path: string | null, geser: number, langsung: boolean, gesit = false) => {
@@ -254,6 +377,8 @@ export function SiteHeader({
         gsap.to(block, { autoAlpha: 0, duration: langsung ? 0 : 0.26, overwrite: "auto" });
         return;
       }
+      const pindahTautan = lastPathRef.current !== path;
+      lastPathRef.current = path;
       gsap.to(block, {
         x: target.offsetLeft + geser,
         yPercent: -50,
@@ -264,6 +389,22 @@ export function SiteHeader({
         ease: "expo.out",
         overwrite: "auto",
       });
+      // Memipih sejenak hanya saat blok benar-benar berpindah tautan (bukan
+      // saat magnet menyeretnya di dalam satu tautan, supaya tidak gemetar).
+      // Overwrite auto: squash baru menggantikan squash lama yang masih jalan.
+      if (pindahTautan && !langsung) {
+        gsap.fromTo(
+          block,
+          { scaleX: 1.045, scaleY: 0.94 },
+          {
+            scaleX: 1,
+            scaleY: 1,
+            duration: gesit ? 0.3 : 0.5,
+            ease: GERAK.ease,
+            overwrite: "auto",
+          },
+        );
+      }
     },
     [],
   );
@@ -322,6 +463,7 @@ export function SiteHeader({
               ref={markRef}
               href="/"
               aria-label={nama}
+              data-nav-mark
               className="origin-left flex min-w-0 items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
             >
               {/* Logo sekolah tampil mentah: berkas PNG-nya memang berlatar
@@ -335,7 +477,10 @@ export function SiteHeader({
                 height={44}
                 className="h-9 w-9 shrink-0 object-contain md:h-10 md:w-10 lg:h-11 lg:w-11"
               />
-              <span className="min-w-0 whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight">
+              <span
+                ref={markTextRef}
+                className="min-w-0 whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight"
+              >
                 {/* Dua tingkat nama: "SMPN 3 Haurwangi" di semua layar
                     sempit sampai di bawah lg, nama resmi penuh mulai lg.
                     Tidak ada lagi versi terpendek "SMPN 3" — identitas
@@ -361,6 +506,7 @@ export function SiteHeader({
               >
                 <span
                   ref={blockRef}
+                  data-nav-block
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-1/2 h-8 w-0 rounded-md opacity-0 transition-colors duration-200 ${
                     hoverPath ? BLOCK[ink].sorot : BLOCK[ink].dasar
@@ -393,21 +539,35 @@ export function SiteHeader({
                 <Link
                   ref={aksiRef}
                   href={ROUTES.kontak.path}
+                  {...tekanAksi}
                   className={`t-small hidden px-3.5 py-3 font-semibold transition-colors sm:block md:px-4 lg:px-5 ${ACTION[ink]} ${LUNAK}`}
                 >
-                  <span className="lg:hidden">Hubungi</span>
-                  <span className="hidden lg:inline">Hubungi sekolah</span>
+                  {/* Label bergulir (globals.css .roll): teks asli naik keluar,
+                      salinannya masuk dari bawah — satu bahasa gerak dengan
+                      blok tinta di sebelahnya. */}
+                  <span className="lg:hidden">
+                    <span className="roll" data-roll="Hubungi">
+                      <span className="roll-face">Hubungi</span>
+                    </span>
+                  </span>
+                  <span className="hidden lg:inline">
+                    <span className="roll" data-roll="Hubungi sekolah">
+                      <span className="roll-face">Hubungi sekolah</span>
+                    </span>
+                  </span>
                 </Link>
                 <button
+                  ref={menuButtonRef}
                   type="button"
                   onClick={() => setMenuOpen((value) => !value)}
                   aria-expanded={menuOpen}
                   aria-controls="menu-seluler"
-                  className={`t-small rounded-lg px-3 py-3 font-semibold outline outline-1 -outline-offset-1 transition-transform duration-150 active:translate-y-px md:hidden ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg outline outline-1 -outline-offset-1 transition-transform duration-150 active:translate-y-px md:hidden ${
                     menuOpen ? "bg-white text-ink" : MENU[ink]
                   }`}
                 >
-                  {menuOpen ? "Tutup" : "Menu"}
+                  <GarisMenu buka={menuOpen} />
+                  <span className="sr-only">{menuOpen ? "Tutup menu" : "Buka menu"}</span>
                 </button>
               </div>
             </div>
@@ -419,16 +579,20 @@ export function SiteHeader({
 
       {/* Panel seluler selalu ada di dalam dokumen supaya bisa dianimasikan
           keluar; saat tertutup ia disembunyikan dengan visibility, jadi tidak
-          ikut terjangkau papan tombol. */}
+          ikut terjangkau papan tombol. Lambang dan judulnya adalah pasangan
+          shared element milik batang: keduanya bermorph dari logo batang. */}
       <div
         id="menu-seluler"
         ref={menuRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu navigasi"
         aria-hidden={!menuOpen}
         className={`invisible fixed inset-0 z-50 flex flex-col bg-[var(--nav-solid)] opacity-0 md:hidden ${INK[field]}`}
       >
         <div className="chapter-inner">
           <div className="flex h-[var(--nav-h)] items-center justify-between gap-3">
-            <span className="flex min-w-0 items-center gap-3">
+            <span ref={panelMarkRef} className="flex min-w-0 items-center gap-3">
               <Image
                 src="/images/logo.png"
                 alt=""
@@ -437,19 +601,21 @@ export function SiteHeader({
                 className="h-10 w-10 shrink-0 object-contain"
               />
               <span
-                data-menu-item
+                ref={panelTextRef}
                 className="whitespace-nowrap text-[clamp(0.9375rem,1.6vw,1.75rem)] font-extrabold tracking-tight"
               >
                 {nama}
               </span>
             </span>
             <button
+              ref={panelCloseRef}
               type="button"
-              data-menu-item
               onClick={() => setMenuOpen(false)}
-              className="t-small bg-white px-3 py-3 font-semibold text-ink"
+              aria-label="Tutup menu"
+              className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-ink transition-transform duration-150 active:translate-y-px"
             >
-              Tutup
+              <GarisMenu buka />
+              <span className="sr-only">Tutup</span>
             </button>
           </div>
         </div>
@@ -462,12 +628,15 @@ export function SiteHeader({
                   href={item.path}
                   onClick={() => setMenuOpen(false)}
                   aria-current={isActive(item.path) ? "page" : undefined}
-                  className={`t-statement flex items-baseline justify-between gap-4 py-3 font-semibold transition-opacity hover:opacity-80 ${
+                  className={`t-statement group flex items-baseline justify-between gap-4 py-3 font-semibold transition-opacity hover:opacity-80 ${
                     isActive(item.path) ? "" : "opacity-90"
                   }`}
                 >
                   {item.label}
-                  <span aria-hidden className="t-body opacity-60">
+                  <span
+                    aria-hidden
+                    className="t-body opacity-60 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                  >
                     →
                   </span>
                 </Link>

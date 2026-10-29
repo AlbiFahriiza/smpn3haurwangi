@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { HomeStat } from "@/lib/content";
+import { GERAK } from "@/components/motion/morph";
 import { Chapter, Inner } from "./chapter";
 import { Reveal } from "@/components/motion/reveal";
 
@@ -35,8 +36,14 @@ function Tile({
       data-reveal-item
       className={`flex flex-col justify-center gap-3 p-7 md:justify-between md:gap-0 md:p-8 ${tint} ${className}`}
     >
-      <p className="t-hero tabular-nums" data-count={hitung ?? undefined}>
-        {stat.value}
+      {/* Angka berangkat dari balik tepi bawah topengnya (roll digit) sambil
+          dihitung naik; angka resminya tetap tercetak di dokumen apa adanya. */}
+      <p className="t-hero tabular-nums">
+        <span className="block overflow-hidden pb-[0.06em]">
+          <span data-digit-roll data-count={hitung ?? undefined} className="block">
+            {stat.value}
+          </span>
+        </span>
       </p>
       <p className="t-small">
         <span className="block font-semibold">{stat.label}</span>
@@ -59,14 +66,23 @@ export function StatsChapter({ stats }: { stats?: HomeStat[] }) {
     () => {
       const mm = gsap.matchMedia();
       mm.add(NO_REDUCE, () => {
-        scope.current?.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
+        scope.current?.querySelectorAll<HTMLElement>("[data-digit-roll]").forEach((el) => {
+          // Roll digit: angka terangkat dari balik topengnya sendiri, satu
+          // tarikan panjang, sekali saja saat masuk layar.
+          gsap.from(el, {
+            yPercent: 112,
+            duration: GERAK.panjang,
+            ease: GERAK.ease,
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+
           const target = Number(el.dataset.count);
           if (!Number.isFinite(target) || target <= 0) return;
           const hitung = { v: 0 };
           gsap.to(hitung, {
             v: target,
-            duration: 1.7,
-            ease: "expo.out",
+            duration: 1.2,
+            ease: GERAK.ease,
             scrollTrigger: { trigger: el, start: "top 88%", once: true },
             onUpdate: () => {
               el.textContent = Math.round(hitung.v).toLocaleString("id-ID");

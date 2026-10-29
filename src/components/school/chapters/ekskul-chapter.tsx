@@ -7,6 +7,7 @@ import { ROUTES } from "@/lib/site";
 import { Chapter, Inner } from "./chapter";
 import { Reveal } from "@/components/motion/reveal";
 import { fotoKegiatan } from "./ekskul-detail-chapter";
+import { useTekan } from "../kontak-tekan";
 
 const FALLBACK = [
   "Pramuka",
@@ -36,6 +37,9 @@ const PETAK = [
  */
 export function EkskulChapter({ ekskul }: { ekskul?: EkskulSection }) {
   const items = ekskul?.items ?? [];
+  // Satu instance umpan balik tekan dipakai bergilir untuk kartu dan tautan
+  // bab ini; ketukan pengunjung selalu datang satu per satu (lihat kontak-tekan).
+  const tekan = useTekan();
   const names = items.length > 0 ? items.map((item) => item.nama) : FALLBACK;
   const wajib = items.find((item) => item.deskripsi.toLowerCase().includes("wajib"))?.nama;
 
@@ -95,6 +99,7 @@ export function EkskulChapter({ ekskul }: { ekskul?: EkskulSection }) {
                   >
                     <Link
                       href={ROUTES.ekskul.path}
+                      {...tekan}
                       className="group block rounded-xl transition-transform duration-150 active:translate-y-px"
                     >
                       <span
@@ -115,7 +120,9 @@ export function EkskulChapter({ ekskul }: { ekskul?: EkskulSection }) {
                             className="h-2 w-2 shrink-0 rounded-full"
                             style={{ background: item.warna }}
                           />
-                          {item.nama}
+                          <span className="roll" data-roll={item.nama}>
+                            <span className="roll-face">{item.nama}</span>
+                          </span>
                         </span>
                         <span className="t-small field-soft mt-1 block tabular-nums">
                           {item.jadwal}
@@ -134,9 +141,14 @@ export function EkskulChapter({ ekskul }: { ekskul?: EkskulSection }) {
 
         <Link
           href={ROUTES.ekskul.path}
+          {...tekan}
           className="t-small mt-12 inline-flex items-center gap-2 rounded-lg bg-foam px-5 py-3 font-semibold text-abyss transition-[background-color,transform] duration-200 hover:bg-sky active:translate-y-px"
         >
-          Lihat halaman ekstrakurikuler
+          {/* Label bergulir saat disorot (globals.css .roll): satu bahasa
+              gerak dengan tombol Hubungi di batang navigasi. */}
+          <span className="roll" data-roll="Lihat halaman ekstrakurikuler">
+            <span className="roll-face">Lihat halaman ekstrakurikuler</span>
+          </span>
           <span aria-hidden>&rarr;</span>
         </Link>
       </Inner>

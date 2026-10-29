@@ -7,8 +7,10 @@ import { useGSAP } from "@gsap/react";
 import { MapPin } from "lucide-react";
 import type { RoutinesSection, SiteContent } from "@/lib/content";
 import { Chapter, Inner } from "../chapters/chapter";
-import { Reveal } from "@/components/motion/reveal";
+import { Reveal, PeelText } from "@/components/motion/reveal";
 import { OpenerChapter } from "../chapters/opener-chapter";
+import { KontakSalin } from "../kontak-salin";
+import { useTekan } from "../kontak-tekan";
 import { BIDANG_PEMBUKA } from "@/lib/chapter-fields";
 import { useToast } from "@/hooks/use-toast";
 
@@ -99,6 +101,13 @@ function JamLayananHari({
   const blokRef = useRef<HTMLSpanElement>(null);
   const tombolRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const belumPernahBerganti = useRef(true);
+  // Hari terakhir yang ditempati blok: memipih hanya saat blok benar-benar
+  // berpindah chip, sama persis seperti blok tinta di batang navigasi — satu
+  // bahasa gerak untuk semua "penanda bergerak" di situs ini.
+  const hariSebelumnya = useRef<Hari | null>(null);
+  // Reaksi tekan dipakai bersama oleh semua chip hari: penangan menunjuk elemen
+  // kejadian sehingga satu instansi cukup untuk tujuh tombol.
+  const tekanChip = useTekan();
 
   // Blok diukur dari kotak tombol, bukan dikira-kira, supaya pas di semua
   // ukuran layar (chip bisa melipat jadi dua baris di ponsel).
@@ -108,6 +117,8 @@ function JamLayananHari({
       if (!blok) return;
       const sasaran = tombolRefs.current[HARI_LAYANAN.indexOf(hari)];
       if (!sasaran) return;
+      const pindahChip = hariSebelumnya.current !== hari;
+      hariSebelumnya.current = hari;
       gsap.to(blok, {
         x: sasaran.offsetLeft,
         y: sasaran.offsetTop,
@@ -118,6 +129,15 @@ function JamLayananHari({
         ease: "expo.out",
         overwrite: "auto",
       });
+      // Follow-through: blok memipih sejenak saat berpindah chip lalu mantap
+      // kembali (dari morph.tsx dipakai easing yang sama dengan batang nav).
+      if (pindahChip && !langsung && !tanpaGerak()) {
+        gsap.fromTo(
+          blok,
+          { scaleX: 1.05, scaleY: 0.92 },
+          { scaleX: 1, scaleY: 1, duration: 0.42, ease: "expo.out", overwrite: "auto" },
+        );
+      }
     },
     [hari],
   );
@@ -212,6 +232,7 @@ function JamLayananHari({
               aria-controls={`jam-${opsi}`}
               tabIndex={aktif ? 0 : -1}
               onClick={() => setHari(opsi)}
+              {...tekanChip}
               onKeyDown={(event) => {
                 if (event.key === "ArrowRight") {
                   event.preventDefault();
@@ -221,8 +242,10 @@ function JamLayananHari({
                   event.preventDefault();
                   pindahkanFokus(index, -1);
                 }
+                tekanChip.onKeyDown(event);
               }}
-              className={`t-small relative z-10 rounded-md px-4 py-2.5 transition-[background-color,color,translate] duration-150 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine ${
+              onKeyUp={tekanChip.onKeyUp}
+              className={`t-small relative z-10 rounded-md px-4 py-2.5 transition-[background-color,color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine ${
                 aktif ? "font-semibold text-ink" : "text-ink/85 hover:bg-ink/8"
               }`}
             >
@@ -271,6 +294,12 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
   const [galat, setGalat] = useState<Record<Kolom, string>>({ nama: "", pesan: "" });
   const bentukRef = useRef<HTMLFormElement>(null);
   const petaScope = useRef<HTMLDivElement>(null);
+  // Satu instansi reaksi tekan per sasaran; penangan menunjuk elemen kejadian
+  // sehingga tautan sosial yang berulang bisa berbagi satu instansi.
+  const tekanSosial = useTekan();
+  const tekanKirim = useTekan();
+  const tekanPetaCta = useTekan();
+  const tekanTautanPeta = useTekan("halus");
 
   // Peta Google kadang tidak termuat: jaringan lambat, terblokir, atau perangkat
   // lama. Begitu bingkai peta mendekati layar (iframe malas mulai dimuat di
@@ -279,6 +308,10 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
   // bisa diklik, sehingga tidak pernah ada kotak kosong yang mematikan.
   const [petaSiap, setPetaSiap] = useState(false);
   const [petaGagal, setPetaGagal] = useState(false);
+  // Benar setelah pesan "sedang dimuat" selesai memudar dan benar-benar lepas
+  // dari halaman; sampai itu terjadi pesan tetap ada sebagai lapisan bawah
+  // kedatangan peta supaya pergantian tidak pernah menampakkan kotak kosong.
+  const [petaLewat, setPetaLewat] = useState(false);
   const petaSiapRef = useRef(false);
 
   const alamat = contact?.alamat ?? identity?.alamat ?? "";
@@ -288,18 +321,37 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
   const petaEmbed = contact?.mapsEmbed ?? "https://www.google.com/maps?q=-6.8005,107.3064&z=16&output=embed";
   const petaTautan = contact?.mapsLink ?? "https://www.google.com/maps?q=-6.8005,107.3064";
   const sosial = contact?.sosial ?? [];
-  const surelUrl = `mailto:${surel}?subject=Pertanyaan%20tentang%20SMP%20Negeri%203%20Haurwangi`;
 
   useEffect(() => {
     const wadah = petaScope.current;
     if (!wadah) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let pantau: ReturnType<typeof setInterval> | undefined;
+    // Bingkai anak Google Maps kadang baru dibuat sejenak SETELAH kejadian
+    // "load" iframe menyala, jadi kesiapan dipantau berulang, bukan sekali
+    // saat load: begitu bingkai anak ada, peta dianggap betul-betul termuat.
+    const cekSiap = () => {
+      if (petaSiapRef.current) return true;
+      const bingkai = wadah.querySelector("iframe");
+      if (bingkai?.contentWindow && bingkai.contentWindow.length > 0) {
+        petaSiapRef.current = true;
+        setPetaSiap(true);
+        if (pantau) clearInterval(pantau);
+        if (timer) clearTimeout(timer);
+        return true;
+      }
+      return false;
+    };
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          timer = setTimeout(() => {
-            if (!petaSiapRef.current) setPetaGagal(true);
-          }, 9000);
+          if (!cekSiap()) {
+            pantau = setInterval(cekSiap, 400);
+            timer = setTimeout(() => {
+              if (pantau) clearInterval(pantau);
+              if (!petaSiapRef.current) setPetaGagal(true);
+            }, 9000);
+          }
           io.disconnect();
         }
       },
@@ -309,6 +361,7 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
     return () => {
       io.disconnect();
       if (timer) clearTimeout(timer);
+      if (pantau) clearInterval(pantau);
     };
   }, []);
 
@@ -327,6 +380,52 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
       return () => mm.revert();
     },
     { scope: petaScope },
+  );
+
+  // Bingkai peta disembunyikan sampai benar-benar termuat supaya pesan pemuatan
+  // selalu terbaca. Peta yang kebetulan sudah termuat sebelum hidrasi (kejadian
+  // "load"nya terlewat) langsung dianggap siap. Tanpa JavaScript tidak ada gaya
+  // tersembunyi: peta tampil sebagaimana adanya.
+  useGSAP(
+    () => {
+      const bingkai = petaScope.current?.querySelector("iframe");
+      if (bingkai?.contentWindow && bingkai.contentWindow.length > 0) {
+        petaSiapRef.current = true;
+        setPetaSiap(true);
+        return;
+      }
+      gsap.set("[data-peta-bingkai]", { autoAlpha: 0 });
+    },
+    { scope: petaScope },
+  );
+
+  // Kedatangan material peta: begitu peta betul-betul siap, bingkainya menetap
+  // dari skala nyaris penuh (0.985) sementara pesan pemuatan memudar di baliknya
+  // lalu lepas dari halaman. Peta sendiri tidak pernah digerakkan gulir.
+  useGSAP(
+    () => {
+      if (!petaSiap) return;
+      const mm = gsap.matchMedia();
+      mm.add(NO_REDUCE, () => {
+        gsap.fromTo(
+          "[data-peta-bingkai]",
+          { autoAlpha: 0, scale: 0.985 },
+          { autoAlpha: 1, scale: 1, duration: 0.55, ease: "expo.out", overwrite: "auto" },
+        );
+        gsap.to("[data-peta-tunggu]", {
+          autoAlpha: 0,
+          duration: 0.2,
+          ease: "power2.out",
+          onComplete: () => setPetaLewat(true),
+        });
+      });
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set("[data-peta-bingkai]", { autoAlpha: 1, scale: 1 });
+        setPetaLewat(true);
+      });
+      return () => mm.revert();
+    },
+    { scope: petaScope, dependencies: [petaSiap] },
   );
 
   // Galat masuk menumpang: keduanya naik bersamaan dengan jeda kecil.
@@ -417,18 +516,11 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
     });
   };
 
+  // Alamat dan surel bisa disalin dengan sekali sentuh (morph "Tersalin");
+  // tautan surel tetap tersedia lewat formulir dan saluran sosial di bawah.
   const keterangan: Array<[string, React.ReactNode]> = [
-    ["Alamat", alamat],
-    [
-      "Surel resmi",
-      <a
-        key="surel"
-        href={surelUrl}
-        className="break-words underline decoration-marine/40 underline-offset-4 transition-colors hover:decoration-marine focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
-      >
-        {surel}
-      </a>,
-    ],
+    ["Alamat", <KontakSalin key="alamat" label="Alamat" nilai={alamat} />],
+    ["Surel resmi", <KontakSalin key="surel" label="Surel resmi" nilai={surel} />],
     ["Jam layanan", jam],
     [
       "Telepon",
@@ -487,7 +579,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                       {...(kanal.url.startsWith("http")
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
-                      className="t-small rounded-md bg-abyss px-5 py-3 font-semibold text-white transition-[background-color,translate] duration-200 hover:bg-deep active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine"
+                      {...tekanSosial}
+                      className="t-small rounded-md bg-abyss px-5 py-3 font-semibold text-white transition-[background-color,translate] duration-200 hover:bg-deep hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine"
                     >
                       {kanal.nama}
                     </a>
@@ -546,8 +639,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
         <Inner>
           <div className="grid gap-x-16 gap-y-24 lg:grid-cols-12 lg:gap-y-14">
             <Reveal className="lg:col-span-7" stagger={0.07}>
-              <h2 data-reveal-item className="t-head">
-                Peta lokasi
+              <h2 className="t-head">
+                <PeelText lines={["Peta lokasi"]} />
               </h2>
               <p data-reveal-item className="t-body field-soft mt-6 max-w-[52ch]">
                 Sekolah berada di Jalan Buniayu, Desa Kertamukti, Kecamatan Haurwangi,
@@ -563,9 +656,11 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                   className="relative min-h-[320px] overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-line md:min-h-[420px]"
                 >
                   {/* Panel pengganti di balik iframe: terlihat selagi peta masih
-                      dimuat, lalu menjadi satu-satunya isi bila tenggat habis. */}
-                  {!petaSiap ? (
+                      dimuat, lalu memudar di balik kedatangan peta; setelah
+                      lewat tenggat tanpa kabar siap, ia menjadi satu-satunya isi. */}
+                  {!petaLewat ? (
                     <div
+                      data-peta-tunggu
                       role="status"
                       aria-live="polite"
                       className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-4 bg-sky px-6 text-center"
@@ -580,14 +675,20 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                         href={petaTautan}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="t-small rounded-lg bg-marine px-5 py-3 font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-abyss active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        {...tekanPetaCta}
+                        className="t-small rounded-lg bg-marine px-5 py-3 font-semibold text-white transition-colors duration-200 hover:bg-abyss focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
-                        Buka lokasi di Google Maps
+                        {/* Label bergulir (globals.css .roll): satu bahasa gerak
+                            dengan tombol Hubungi di batang navigasi. */}
+                        <span className="roll" data-roll="Buka lokasi di Google Maps">
+                          <span className="roll-face">Buka lokasi di Google Maps</span>
+                        </span>
                       </a>
                     </div>
                   ) : null}
                   {!petaGagal ? (
                     <iframe
+                      data-peta-bingkai
                       src={petaEmbed}
                       title="Peta lokasi SMP Negeri 3 Haurwangi"
                       loading="lazy"
@@ -597,8 +698,9 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                         // Kejadian "load" ikut menyala untuk halaman kosong
                         // ketika navigasi gagal, jadi cek isinya: peta Google
                         // yang betul-betul termuat punya bingkai anak di dalam
-                        // iframe (window.length > 0). Kalau kosong, biarkan
-                        // tenggat yang memutuskan menggantikan peta.
+                        // iframe (window.length > 0). Kalau bingkai anaknya
+                        // belum ada di momen ini, pemantau berulang di atas
+                        // yang kelak memutuskan.
                         const bingkaiAnak = event.currentTarget.contentWindow?.length ?? 0;
                         if (bingkaiAnak > 0) {
                           petaSiapRef.current = true;
@@ -616,6 +718,7 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                   href={petaTautan}
                   target="_blank"
                   rel="noopener noreferrer"
+                  {...tekanTautanPeta}
                   className="underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
                 >
                   Buka di Google Maps
@@ -624,8 +727,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
             </Reveal>
 
             <Reveal className="lg:col-span-5" stagger={0.07}>
-              <h2 data-reveal-item className="t-head">
-                Kirim pesan
+              <h2 className="t-head">
+                <PeelText lines={["Kirim pesan"]} />
               </h2>
               <p data-reveal-item className="t-body field-soft mt-6 max-w-[42ch]">
                 Tulis pertanyaan, saran, atau masukan. Pesan akan diteruskan ke surel resmi
@@ -704,7 +807,8 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                 </div>
                 <button
                   type="submit"
-                  className="t-body inline-flex items-center gap-2 rounded-lg bg-abyss px-7 py-4 font-semibold text-white transition-[background-color,translate] duration-200 hover:bg-deep active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine"
+                  {...tekanKirim}
+                  className="t-body inline-flex items-center gap-2 rounded-lg bg-abyss px-7 py-4 font-semibold text-white transition-colors duration-200 hover:bg-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marine"
                 >
                   {status === "terbuka" ? (
                     <>
@@ -724,7 +828,13 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
                       <span data-label-tombol>Aplikasi surel dibuka</span>
                     </>
                   ) : (
-                    <span data-label-tombol>Kirim pesan</span>
+                    // Label bergulir saat disorot (globals.css .roll); setelah
+                    // terkirim labelnya berganti lewat animasi status di atas.
+                    <span data-label-tombol>
+                      <span className="roll" data-roll="Kirim pesan">
+                        <span className="roll-face">Kirim pesan</span>
+                      </span>
+                    </span>
                   )}
                 </button>
               </form>

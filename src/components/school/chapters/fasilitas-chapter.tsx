@@ -8,6 +8,7 @@ import { useGSAP } from "@gsap/react";
 import { Maximize2, XIcon } from "lucide-react";
 import type { DenahSection, Identity, StudentsSection } from "@/lib/content";
 import { Chapter, Inner } from "./chapter";
+import { useTekan } from "../kontak-tekan";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,6 +40,11 @@ export function FasilitasChapter({
 }) {
   const scope = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  // Reaksi tekan seketika (pointer-down): tombol daftar tempat, figur denah
+  // yang menampung seluruh area kliknya, dan tombol tutup panel besar.
+  const tekanTempat = useTekan();
+  const tekanDenah = useTekan();
+  const tekanTutup = useTekan();
 
   // Denah besar (lightbox): terbang dari figur denah kecil memakai FLIP manual
   // yang sama dengan panel ekskul, supaya momen geraknya seragam antarhalaman.
@@ -279,7 +285,8 @@ export function FasilitasChapter({
                         type="button"
                         onClick={(event) => pilihTempat(index, event)}
                         aria-pressed={isActive}
-                        className={`w-full rounded-md px-5 py-4 text-left transition active:translate-y-px ${
+                        {...tekanTempat}
+                        className={`w-full rounded-md px-5 py-4 text-left transition-[background-color,color,translate] duration-200 ${
                           isActive ? "bg-abyss text-white" : "hover:bg-abyss/6"
                         }`}
                       >
@@ -308,13 +315,16 @@ export function FasilitasChapter({
         <Inner className="mt-16 md:mt-24">
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <figure className="relative lg:col-span-7">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-white">
+              <div
+                {...tekanDenah}
+                className="group relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-white transition-[translate] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
+              >
                 <Image
                   src={denahGambar}
                   alt="Denah blok bangunan SMP Negeri 3 Haurwangi"
                   fill
                   sizes="(min-width: 1024px) 55vw, 92vw"
-                  className="object-contain"
+                  className="object-contain transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
                 />
                 {/* Penanda perbesar di pojok: papan tombol yang sama lebar dengan
                     figur, jadi seluruh denah bisa diklik, termasuk dari ponsel. */}
@@ -395,7 +405,8 @@ export function FasilitasChapter({
                   ref={denahTutup}
                   type="button"
                   onClick={tutupDenah}
-                  className="t-small absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-lg bg-abyss px-3.5 py-2.5 font-semibold text-white transition-transform duration-200 active:translate-y-px"
+                  {...tekanTutup}
+                  className="t-small absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-lg bg-abyss px-3.5 py-2.5 font-semibold text-white"
                 >
                   <XIcon aria-hidden className="size-4" />
                   Tutup

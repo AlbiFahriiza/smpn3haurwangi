@@ -601,3 +601,73 @@
   }
 }
 
+/* ============================================================ transisi halaman
+   Transisi tampilan lintas dokumen (Chromium 126+ / Safari 18.2+): halaman
+   lama dan baru digabung jadi satu crossfade mulus; peramban lain cukup
+   berganti halaman seperti biasa. Dua elemen diberi nama supaya benar-benar
+   shared element antar halaman: lambang sekolah (posisinya sama, jadi ia
+   terasa "dibawa" pindah) dan blok tinta navigasi (berpindah dari tautan
+   aktif halaman lama ke tautan aktif halaman baru).
+   Catatan: elemen ber-backdrop-filter (nav-band) sengaja TIDAK dinamai
+   supaya penahanan cat (paint containment) tidak merusak efek kacanya. */
+@view-transition {
+  navigation: auto;
+}
+[data-nav-mark] {
+  view-transition-name: site-mark;
+}
+[data-nav-block] {
+  view-transition-name: site-block;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: var(--ease-smooth);
+}
+::view-transition-old(site-mark),
+::view-transition-new(site-mark) {
+  animation-duration: 340ms;
+  animation-timing-function: var(--ease-smooth);
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* ============================================================ tombol bergulir
+   Label tombol yang "menggulung" saat disorot: teks asli terangkat keluar
+   lewat atas, salinannya (isi atribut data-roll) masuk dari bawah — umpan
+   balik halus ala tombol navigasi Apple. Cukup transform, tanpa layout.
+   Cara pakai:
+   <button><span class="roll" data-roll="Teks"><span class="roll-face">Teks</span></span></button>
+   Satu baris teks saja; teks dan salinannya harus sama persis. */
+.roll {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+}
+.roll-face {
+  display: block;
+}
+.roll::after {
+  content: attr(data-roll);
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform: translateY(105%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .roll,
+  .roll-face,
+  .roll::after {
+    transition: transform 300ms var(--ease-smooth);
+  }
+  .roll:hover .roll-face {
+    transform: translateY(-105%);
+  }
+  .roll:hover::after {
+    transform: translateY(0);
+  }
+}
+

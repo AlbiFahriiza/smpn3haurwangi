@@ -16,6 +16,12 @@ const NO_REDUCE = "(prefers-reduced-motion: no-preference)";
 const FOTO_HOVER =
   "transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]";
 
+/** Kartu terangkat dua piksel saat disorot, terasa tanpa mengganggu bacaan:
+ * properti translate saja (bukan transform) supaya tidak pernah berebut
+ * dengan animasi masuk GSAP pada elemen yang sama. */
+const KARTU_LIFT =
+  "transition-[translate] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5";
+
 /**
  * Bab berita: satu gambar besar memimpin, dua kabar lainnya turun sebagai pita
  * bergantian nada. Kartu dan potret memakai sudut pelan (rounded-xl), tanggal
@@ -56,7 +62,7 @@ export function BeritaChapter({ berita }: { berita?: HomeSection["berita"] }) {
             <div className="lg:col-span-7">
               <div
                 data-kabar-utama
-                className="group relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-line"
+                className={`group relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-line ${KARTU_LIFT}`}
               >
                 <Image
                   src={utama.image}
@@ -91,11 +97,11 @@ export function BeritaChapter({ berita }: { berita?: HomeSection["berita"] }) {
                   <li
                     key={item.title}
                     data-reveal-item
-                    className={`grid grid-cols-[5rem_1fr] items-center gap-5 rounded-xl px-5 py-6 md:grid-cols-[7rem_1fr_auto] md:gap-8 md:px-7 ${
+                    className={`group grid grid-cols-[5rem_1fr] items-center gap-5 rounded-xl px-5 py-6 md:grid-cols-[7rem_1fr_auto] md:gap-8 md:px-7 ${KARTU_LIFT} ${
                       index % 2 === 0 ? "bg-white" : "bg-line"
                     }`}
                   >
-                    <div className="group relative aspect-square w-full overflow-hidden rounded-md bg-abyss">
+                    <div className="relative aspect-square w-full overflow-hidden rounded-md bg-abyss">
                       <Image
                         src={item.image}
                         alt={item.title}
