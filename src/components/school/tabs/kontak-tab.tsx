@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { MapPin } from "lucide-react";
 import type { RoutinesSection, SiteContent } from "@/lib/content";
 import { Chapter, Inner } from "../chapters/chapter";
 import { Reveal } from "@/components/motion/reveal";
@@ -271,6 +272,15 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
   const bentukRef = useRef<HTMLFormElement>(null);
   const petaScope = useRef<HTMLDivElement>(null);
 
+  // Peta Google kadang tidak termuat: jaringan lambat, terblokir, atau perangkat
+  // lama. Begitu bingkai peta mendekati layar (iframe malas mulai dimuat di
+  // titik itu), tenggat dijalankan; lewat tenggat tanpa kabar siap berarti
+  // panel pengganti yang mengambil tempat, lengkap dengan tautan yang tetap
+  // bisa diklik, sehingga tidak pernah ada kotak kosong yang mematikan.
+  const [petaSiap, setPetaSiap] = useState(false);
+  const [petaGagal, setPetaGagal] = useState(false);
+  const petaSiapRef = useRef(false);
+
   const alamat = contact?.alamat ?? identity?.alamat ?? "";
   const surel = contact?.email ?? identity?.email ?? "smpn3_haurwangi@yahoo.com";
   const jam = contact?.jamLayanan ?? "Senin-Jumat, 07.00-15.30 WIB";
@@ -279,6 +289,28 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
   const petaTautan = contact?.mapsLink ?? "https://www.google.com/maps?q=-6.8005,107.3064";
   const sosial = contact?.sosial ?? [];
   const surelUrl = `mailto:${surel}?subject=Pertanyaan%20tentang%20SMP%20Negeri%203%20Haurwangi`;
+
+  useEffect(() => {
+    const wadah = petaScope.current;
+    if (!wadah) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          timer = setTimeout(() => {
+            if (!petaSiapRef.current) setPetaGagal(true);
+          }, 9000);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "320px 0px" },
+    );
+    io.observe(wadah);
+    return () => {
+      io.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
 
   // Panel peta dikupas naik dari balik tepi bawahnya, gerak clip-path saja.
   useGSAP(
@@ -524,19 +556,58 @@ export function KontakTab({ content }: { content: Partial<SiteContent> }) {
               </p>
               <div ref={petaScope} className="mt-8">
                 {/* Bingkai peta: sudut pelan dengan garis rambut; overflow-hidden
-                    wajib supaya peta tidak keluar dari sudutnya. */}
+                    wajib supaya peta tidak keluar dari sudutnya. Tinggi minimum
+                    dijaga agar panel pengganti tetap layak saat iframe dilepas. */}
                 <div
                   data-peta-panel
-                  className="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-line"
+                  className="relative min-h-[320px] overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-line md:min-h-[420px]"
                 >
-                  <iframe
-                    src={petaEmbed}
-                    title="Peta lokasi SMP Negeri 3 Haurwangi"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    allowFullScreen
-                    className="h-[320px] w-full border-0 md:h-[420px]"
-                  />
+                  {/* Panel pengganti di balik iframe: terlihat selagi peta masih
+                      dimuat, lalu menjadi satu-satunya isi bila tenggat habis. */}
+                  {!petaSiap ? (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-4 bg-sky px-6 text-center"
+                    >
+                      <MapPin aria-hidden className="size-9 text-marine" />
+                      <p className="t-body max-w-[40ch]">
+                        {petaGagal
+                          ? "Peta daring tidak dapat dimuat pada perangkat ini. Lokasi tetap bisa dibuka di aplikasi peta."
+                          : "Peta lokasi sekolah sedang dimuat."}
+                      </p>
+                      <a
+                        href={petaTautan}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="t-small rounded-lg bg-marine px-5 py-3 font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-abyss active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      >
+                        Buka lokasi di Google Maps
+                      </a>
+                    </div>
+                  ) : null}
+                  {!petaGagal ? (
+                    <iframe
+                      src={petaEmbed}
+                      title="Peta lokasi SMP Negeri 3 Haurwangi"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                      onLoad={(event) => {
+                        // Kejadian "load" ikut menyala untuk halaman kosong
+                        // ketika navigasi gagal, jadi cek isinya: peta Google
+                        // yang betul-betul termuat punya bingkai anak di dalam
+                        // iframe (window.length > 0). Kalau kosong, biarkan
+                        // tenggat yang memutuskan menggantikan peta.
+                        const bingkaiAnak = event.currentTarget.contentWindow?.length ?? 0;
+                        if (bingkaiAnak > 0) {
+                          petaSiapRef.current = true;
+                          setPetaSiap(true);
+                        }
+                      }}
+                      className="relative z-10 h-[320px] w-full border-0 md:h-[420px]"
+                    />
+                  ) : null}
                 </div>
               </div>
               <p data-reveal-item className="t-small field-soft mt-4">

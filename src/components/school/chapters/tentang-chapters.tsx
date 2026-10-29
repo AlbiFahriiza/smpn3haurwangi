@@ -411,8 +411,10 @@ export function GuruRosterChapter({ teachers }: { teachers?: TeachersSection }) 
                     data-reveal-item
                     className={orang.foto ? "grid gap-6 sm:grid-cols-[8.5rem_1fr]" : ""}
                   >
+                    {/* Garis rambut seirama latar gelap bab ini membingkai
+                        potret kecil, tanpa menambah bayangan berlapis. */}
                     {orang.foto ? (
-                      <div className="group relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden rounded-xl bg-abyss">
+                      <div className="group relative aspect-[4/5] w-full max-w-[8.5rem] overflow-hidden rounded-xl bg-abyss outline outline-1 -outline-offset-1 outline-line">
                         <Image
                           src={orang.foto}
                           alt={`${orang.nama}, ${orang.jabatan} SMP Negeri 3 Haurwangi`}

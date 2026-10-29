@@ -74,7 +74,10 @@ export function GuruChapter({ teachers }: { teachers?: TeachersSection }) {
                     href={`${ROUTES.tentang.path}#guru-dan-tendik`}
                     className="group block transition active:translate-y-px"
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-line">
+                    {/* Garis rambut mengelilingi potret supaya foto dengan latar
+                        berbeda-beda tetap terbaca sebagai satu deretan yang
+                        sengaja dirakit (flat, tanpa bayangan berlapis). */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-line outline outline-1 -outline-offset-1 outline-abyss/20">
                       <Image
                         src={item.foto}
                         alt={`${item.nama}, ${item.jabatan} SMP Negeri 3 Haurwangi`}
