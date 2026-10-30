@@ -262,9 +262,9 @@ export function SiteHeader({
    * Lambang dan judul TIDAK ikut stagger: keduanya di-morph dari pasangannya
    * di batang (shared element) — logo panel "lahir" tepat dari kotak logo
    * batang, dan judul panel menyingkap selebar judul batang lalu melapang
-   * penuh menampilkan nama lengkap. Saat ditutup panel mengerut kembali
-   * dengan cepat; batang di belakangnya tidak pernah pindah, jadi lambang
-   * terasa satu benda yang sama dari buka sampai tutup. */
+   * penuh menampilkan nama lengkap. Saat ditutup tirai menutup kembali dengan
+   * cepat; batang di belakangnya tidak pernah pindah, jadi lambang terasa
+   * satu benda yang sama dari buka sampai tutup. */
   useEffect(() => {
     const panel = menuRef.current;
     if (!panel) return;
@@ -274,12 +274,14 @@ export function SiteHeader({
         gsap.set(panel, { autoAlpha: 0 });
         return;
       }
+      // Tutup = tirai menutup (clip-path murni, tanpa fade); panel disembunyikan
+      // seketika begitu tirainya tertutup penuh.
       gsap.to(panel, {
-        autoAlpha: 0,
         clipPath: "inset(0% 0% 100% 0%)",
         duration: 0.32,
         ease: "power2.in",
         overwrite: "auto",
+        onComplete: () => gsap.set(panel, { visibility: "hidden", opacity: 0 }),
       });
       return;
     }
@@ -325,18 +327,20 @@ export function SiteHeader({
       }
     }
 
+    // Panel hadir seketika penuh (opacity 1) di balik klip yang masih tertutup
+    // total, lalu tirainya menyingkap dari atas; item meluncur naik satu per
+    // satu di belakang garis singkap — semuanya gerak murni, tanpa fade.
     const garis = gsap.timeline();
     garis
-      .set(panel, { visibility: "visible", clipPath: "inset(0% 0% 100% 0%)" })
+      .set(panel, { visibility: "visible", opacity: 1, clipPath: "inset(0% 0% 100% 0%)" })
       .to(panel, {
-        autoAlpha: 1,
         clipPath: "inset(0% 0% 0% 0%)",
         duration: 0.6,
         ease: "expo.out",
       })
       .from(
         isi,
-        { autoAlpha: 0, y: 28, duration: 0.55, stagger: 0.055, ease: "expo.out" },
+        { y: 28, duration: 0.55, stagger: 0.055, ease: "expo.out" },
         0.1,
       );
     return () => {

@@ -77,11 +77,39 @@ const proyeksiMomentum = (kecepatan: number) => (kecepatan / 1000) * (0.998 / (1
 const tahananKaret = (lewah: number, ukuran: number) =>
   (lewah * ukuran * 0.55) / (ukuran + 0.55 * Math.abs(lewah));
 
-/** Tiga elemen kartu yang menjadi titik berangkat elemen bersama di panel. */
+/** Empat elemen kartu yang menjadi titik berangkat elemen bersama di panel
+ * (tiga isi + kotak kartunya sendiri sebagai asal bingkai). */
 type AsalBersama = {
+  kartu: HTMLElement | null;
   foto: HTMLElement | null;
   judul: HTMLElement | null;
   jadwal: HTMLElement | null;
+};
+
+/** Kumpulkan pasangan elemen bersama dari sebuah kartu (li). */
+const asalDariKartu = (kartu: HTMLElement | null): AsalBersama => ({
+  kartu,
+  foto: kartu?.querySelector<HTMLElement>("[data-kartu-foto]") ?? null,
+  judul: kartu?.querySelector<HTMLElement>("[data-kartu-judul]") ?? null,
+  jadwal: kartu?.querySelector<HTMLElement>("[data-kartu-jadwal]") ?? null,
+});
+
+/** Elemen bersama yang benar-benar dipinjam: salinan di kartu hilang seketika
+ * (visibility, bukan fade) selama pasangannya terbang, jadi tidak pernah ada
+ * dua potret yang terlihat bersamaan. */
+const pinjamAsal = (asal: AsalBersama | null) => {
+  const isi = [asal?.foto, asal?.judul, asal?.jadwal].filter(
+    (el): el is HTMLElement => el instanceof HTMLElement,
+  );
+  if (isi.length) gsap.set(isi, { visibility: "hidden" });
+};
+
+/** Kembalikan pinjaman ke kartu, seketika (tanpa fade). */
+const lepasAsal = (asal: AsalBersama | null) => {
+  const isi = [asal?.foto, asal?.judul, asal?.jadwal].filter(
+    (el): el is HTMLElement => el instanceof HTMLElement,
+  );
+  if (isi.length) gsap.set(isi, { visibility: "visible" });
 };
 
 /**
@@ -277,14 +305,16 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
   );
 
   /**
-   * Panel baca fokus, bagian elemen bersama: potret, judul, dan chip jadwal
-   * terbang dari kartu yang diketuk lewat flipBetween (morph.tsx: FLIP manual
-   * dengan durasi, easing, dan cara interupsi yang sama di seluruh situs;
-   * bingkai panel sekadar memudar di belakangnya). Begitu panel terbuka,
-   * tombol Sebelumnya dan Berikutnya mengganti kegiatan tanpa menutup panel:
-   * potret saling padam dengan susut skala kecil dan teks bergeser mengikuti
-   * arah pindah. Pengguna gerak minimal langsung mendapat hasil akhir tanpa
-   * penerbangan.
+   * Panel baca fokus, bagian elemen bersama: bingkai panel TUMBUH dari kotak
+   * kartu yang diketuk (container morph, skala bebas) sementara potret, judul,
+   * dan chip jadwal terbang dari isi kartunya lewat flipBetween (morph.tsx:
+   * FLIP manual dengan durasi, easing, dan cara interupsi yang sama di seluruh
+   * situs). Isi kartu dipinjam seketika dan dikembalikan persis saat mendarat,
+   * jadi hanya pernah ada satu salinan yang terlihat — tanpa pandangan ganda
+   * dan tanpa fade. Begitu panel terbuka, tombol Sebelumnya dan Berikutnya
+   * mengganti kegiatan tanpa menutup panel: potret lama meluncur keluar dan
+   * potret baru masuk dari arah pindah, teks bergeser mengikuti arah.
+   * Pengguna gerak minimal langsung mendapat hasil akhir tanpa penerbangan.
    */
   useGSAP(
     () => {
@@ -309,9 +339,16 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
           pertamaRef.current = false;
           const asal = asalRef.current;
           const tl = gsap.timeline();
-          tl.fromTo(scrim, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: "power2.out" }, 0);
-          if (bingkai) {
-            tl.fromTo(bingkai, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 0);
+          // Scrim hadir sebagai tirai clip-path yang menyingkap dari atas —
+          // bidang gelap bergerak, tidak memudar dari kosong.
+          gsap.set(scrim, { visibility: "visible", opacity: 1, clipPath: "inset(0% 0% 100% 0%)" });
+          tl.to(scrim, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.42, ease: "power2.out" }, 0);
+          // Container morph: bingkai panel tumbuh dari kotak kartu yang diketuk
+          // (skala bebas, titik asal pojok) — panel benar-benar keluar dari
+          // kartunya. Isi kartu sudah dipinjam di bukaKartu sebelum paint.
+          if (bingkai && asal?.kartu) {
+            gsap.set(bingkai, { visibility: "visible", opacity: 1 });
+            flipBetween(asal.kartu, bingkai, { durasi: GERAK.panjang, skala: "bebas" });
           }
           // Elemen bersama berangkat dari kartu lewat flipBetween: potret
           // memimpin satu tarikan penuh (skala "seragam" supaya isinya tidak
@@ -330,37 +367,47 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
             skala: "seragam",
             jeda: 0.09,
           });
-          // Isi pelengkap menyusul saat penerbangan foto baru 36% jalan.
+          // Isi pelengkap muncul seketika lalu meluncur naik saat penerbangan
+          // foto baru 36% jalan — tanpa fade.
+          const tambahan = panel.querySelectorAll("[data-panel-tambahan]");
+          gsap.set(tambahan, { visibility: "hidden" });
           tl.fromTo(
-            panel.querySelectorAll("[data-panel-tambahan]"),
-            { y: 14, autoAlpha: 0 },
-            { y: 0, autoAlpha: 1, duration: 0.4, stagger: 0.05, ease: "power3.out" },
+            tambahan,
+            { y: 14, visibility: "visible" },
+            { y: 0, duration: 0.4, stagger: 0.05, ease: "power3.out", immediateRender: false },
             0.18,
           );
           if (tutupRef.current) {
-            tl.fromTo(tutupRef.current, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.24 }, 0.28);
+            gsap.set(tutupRef.current, { visibility: "hidden" });
+            tl.fromTo(
+              tutupRef.current,
+              { y: -8, visibility: "visible" },
+              { y: 0, duration: 0.24, ease: "power2.out", immediateRender: false },
+              0.28,
+            );
           }
           return;
         }
 
-        // Pergantian kegiatan di dalam panel: potret baru memudar masuk dengan
-        // susut skala kecil sementara potret lama memudar pergi; teks bergeser
-        // mengikuti arah. Semuanya transform dan opacity saja.
+        // Pergantian kegiatan di dalam panel: potret lama meluncur keluar dan
+        // potret baru masuk dari arah pindah — keduanya opak penuh, tanpa
+        // saling padam — sementara teks bergeser mengikuti arah. Semuanya
+        // transform saja.
         gsap.set([panel, foto, judul, jadwal], { x: 0, y: 0, scaleX: 1, scaleY: 1, autoAlpha: 1 });
         const pudar = namaLamaRef.current;
         const fotoBaru = foto.querySelector("[data-foto-baru]");
         const fotoLama = foto.querySelector("[data-foto-lama]");
+        const arah = arahRef.current;
         if (fotoBaru) {
           gsap.fromTo(
             fotoBaru,
-            { autoAlpha: 0, scale: 1.04 },
-            { autoAlpha: 1, scale: 1, duration: 0.45, ease: "expo.out", overwrite: "auto" },
+            { xPercent: arah * 34 },
+            { xPercent: 0, duration: 0.45, ease: "expo.out", overwrite: "auto" },
           );
         }
         if (fotoLama) {
           gsap.to(fotoLama, {
-            autoAlpha: 0,
-            scale: 0.98,
+            xPercent: arah * -34,
             duration: 0.3,
             ease: "power2.in",
             overwrite: "auto",
@@ -369,8 +416,8 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
         }
         gsap.fromTo(
           panel.querySelectorAll("[data-panel-teks]"),
-          { x: arahRef.current * 26, autoAlpha: 0 },
-          { x: 0, autoAlpha: 1, duration: 0.4, stagger: 0.04, ease: "power3.out", overwrite: "auto" },
+          { x: arah * 26 },
+          { x: 0, duration: 0.4, stagger: 0.04, ease: "power3.out", overwrite: "auto" },
         );
       });
 
@@ -387,12 +434,11 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
       menutupTweenRef.current?.kill();
       menutupRef.current = false;
     }
-    const kartu = tombol.closest("li");
-    asalRef.current = {
-      foto: kartu?.querySelector<HTMLElement>("[data-kartu-foto]") ?? null,
-      judul: kartu?.querySelector<HTMLElement>("[data-kartu-judul]") ?? null,
-      jadwal: kartu?.querySelector<HTMLElement>("[data-kartu-jadwal]") ?? null,
-    };
+    const asal = asalDariKartu(tombol.closest("li"));
+    // Isi kartu dipinjam panel seketika (visibility, bukan fade): hanya satu
+    // salinan potret/judul/jadwal yang terlihat selama penerbangan.
+    pinjamAsal(asal);
+    asalRef.current = asal;
     asalTombol.current = tombol;
     pertamaRef.current = true;
     setBuka(index);
@@ -412,6 +458,10 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
     const selesai = () => {
       menutupRef.current = false;
       namaLamaRef.current = null;
+      // Pinjaman kembali ke kartu pada bingkai yang sama dengan lepasnya
+      // panel: satu benda terus-menerus, tanpa jeda dua salinan.
+      lepasAsal(asalRef.current);
+      asalRef.current = null;
       setBuka(null);
       setNamaLama(null);
       asalTombol.current?.focus({ preventScroll: true });
@@ -424,13 +474,17 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
     const asal = asalRef.current;
     const bingkai = panel.querySelector<HTMLElement>("[data-panel-bingkai]");
     const tl = gsap.timeline({ onComplete: selesai });
+    // Isi pelengkap meluncur keluar lalu lenyap seketika (tanpa fade).
+    const tambahan = panel.querySelectorAll("[data-panel-tambahan]");
     tl.to(
-      panel.querySelectorAll("[data-panel-tambahan]"),
-      { y: -8, autoAlpha: 0, duration: 0.18, stagger: 0.03, ease: "power2.in" },
+      tambahan,
+      { y: -10, duration: 0.16, stagger: 0.03, ease: "power2.in", overwrite: "auto" },
       0,
     );
+    tl.set(tambahan, { visibility: "hidden" }, 0.18);
     if (tutupRef.current) {
-      tl.to(tutupRef.current, { autoAlpha: 0, duration: 0.15, ease: "power1.in", overwrite: "auto" }, 0);
+      tl.to(tutupRef.current, { y: -6, duration: 0.12, ease: "power1.in", overwrite: "auto" }, 0);
+      tl.set(tutupRef.current, { visibility: "hidden" }, 0.13);
     }
     // flipBetween menambatkan skala di titik tengah elemen, jadi tepi kiri
     // atas tata letak (tanpa transform) dihitung dengan melepas dulu geseran
@@ -468,28 +522,63 @@ export function EkskulDaftarChapter({ ekskul }: { ekskul?: EkskulSection }) {
     pulangkan(fotoRef.current, asal?.foto ?? null, 0.05);
     pulangkan(judulRef.current, asal?.judul ?? null, 0.07);
     pulangkan(jadwalRef.current, asal?.jadwal ?? null, 0.09);
-    if (scrim) {
-      tl.to(scrim, { autoAlpha: 0, duration: 0.26, ease: "power2.in", overwrite: "auto" }, 0.08);
+    // Bingkai menyusut kembali ke kotak kartunya (container morph terbalik,
+    // titik asal pojok seperti saat membuka) dan scrim menutup sebagai tirai.
+    if (bingkai && asal?.kartu) {
+      const rect = asal.kartu.getBoundingClientRect();
+      const kini = bingkai.getBoundingClientRect();
+      const x = (gsap.getProperty(bingkai, "x") as number) || 0;
+      const y = (gsap.getProperty(bingkai, "y") as number) || 0;
+      const sx = (gsap.getProperty(bingkai, "scaleX") as number) || 1;
+      const sy = (gsap.getProperty(bingkai, "scaleY") as number) || 1;
+      const w = kini.width / sx;
+      const h = kini.height / sy;
+      tl.to(
+        bingkai,
+        {
+          x: rect.left - (kini.left - x),
+          y: rect.top - (kini.top - y),
+          scaleX: rect.width / w,
+          scaleY: rect.height / h,
+          duration: GERAK.sedang,
+          ease: "power3.inOut",
+          overwrite: "auto",
+        },
+        0.05,
+      );
     }
-    if (bingkai) {
-      tl.to(bingkai, { autoAlpha: 0, duration: 0.2, ease: "power1.in", overwrite: "auto" }, 0.16);
+    if (scrim) {
+      tl.to(
+        scrim,
+        { clipPath: "inset(0% 0% 100% 0%)", duration: 0.3, ease: "power2.in", overwrite: "auto" },
+        0.06,
+      );
+      tl.set(scrim, { visibility: "hidden" }, 0.34);
     }
     menutupTweenRef.current = tl;
   };
 
-  // Menggeser kegiatan di dalam panel terbuka; potret kegiatan yang ditinggal
-  // disimpan dulu sebagai lapisan lama untuk saling padam.
+  // Menggeser kegiatan di dalam panel terbuka; isi kartu lama dikembalikan
+  // ke kisi dan isi kartu baru dipinjam panel (serah-terima seketika), lalu
+  // potret kegiatan yang ditinggal disimpan sebagai lapisan lama yang
+  // meluncur keluar digantikan potret baru dari arah pindah.
   const geser = useCallback(
     (arah: 1 | -1) => {
       if (buka === null || menutupRef.current) return;
       const jumlah = items.length;
       if (jumlah < 2) return;
       arahRef.current = arah;
+      const baru = (buka + arah + jumlah) % jumlah;
       if (!tanpaGerak) {
+        lepasAsal(asalRef.current);
+        const kartuBaru = deretRef.current?.querySelectorAll("li")[baru] ?? null;
+        const asalBaru = asalDariKartu(kartuBaru);
+        pinjamAsal(asalBaru);
+        asalRef.current = asalBaru;
         namaLamaRef.current = items[buka].nama;
         setNamaLama(items[buka].nama);
       }
-      setBuka((kini) => (kini === null ? kini : (kini + arah + jumlah) % jumlah));
+      setBuka(baru);
     },
     [buka, items, tanpaGerak],
   );

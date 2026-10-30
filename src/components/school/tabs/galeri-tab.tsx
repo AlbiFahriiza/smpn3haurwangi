@@ -14,7 +14,9 @@ import { useTekan } from "../kontak-tekan";
 import { OpenerChapter } from "../chapters/opener-chapter";
 import { KontakChapter } from "../chapters/kontak-chapter";
 import { BIDANG_PEMBUKA } from "@/lib/chapter-fields";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogPortal, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { XIcon } from "lucide-react";
 
 gsap.registerPlugin(Flip, useGSAP);
 
@@ -164,14 +166,16 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
 
   /**
    * Ganti kategori dengan transisi tata letak (Flip): petak yang tinggal
-   * meluncur ke slot barunya, yang keluar memudar cepat, yang masuk memudar
-   * tumbuh. State ditangkap sebelum render; Flip.from dimainkan setelah DOM
-   * berganti. Ganti kategori lagi di tengah jalan aman: flip lama selesai
-   * seketika dulu (revert) supaya tangkapan baru mulai dari posisi diam.
+   * meluncur ke slot barunya, yang keluar menyingkir singkat lalu lenyap
+   * seketika, yang masuk tumbuh dari skala kecil. State ditangkap sebelum
+   * render; Flip.from dimainkan setelah DOM berganti. Ganti kategori lagi
+   * di tengah jalan aman: flip lama selesai seketika dulu (revert) supaya
+   * tangkapan baru mulai dari posisi diam.
    */
   const gantiFilter = (nama: string) => {
     if (nama === pilih) return;
     pulihkanFlip();
+    if (buka !== null) pulangkanAsal();
     setBuka(null);
     const grid = gridRef.current;
     if (!grid || tanpaGerakRef.current) {
@@ -208,11 +212,10 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
         onEnter: (els) =>
           gsap.fromTo(
             els,
-            { autoAlpha: 0, scale: 0.92 },
+            { scale: 0.94 },
             {
-              autoAlpha: 1,
               scale: 1,
-              duration: 0.32,
+              duration: 0.34,
               ease: "power2.out",
               stagger: { amount: 0.22 },
               overwrite: "auto",
@@ -220,11 +223,12 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
           ),
         onLeave: (els) =>
           gsap.to(els, {
-            autoAlpha: 0,
-            scale: 0.94,
+            y: 10,
+            scale: 0.95,
             duration: 0.2,
             ease: "power2.in",
             overwrite: "auto",
+            onComplete: () => gsap.set(els, { visibility: "hidden" }),
           }),
       });
     },
@@ -233,21 +237,43 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
 
   const geser = (arah: 1 | -1) => {
     const jumlah = tersaring.length;
-    if (jumlah === 0 || menutupRef.current) return;
+    if (jumlah === 0 || buka === null || menutupRef.current) return;
+    const baru = (buka + arah + jumlah) % jumlah;
+    // Serah-terima pinjaman: petak foto lama kembali ke kisi, petak foto baru
+    // dipinjam lightbox — keduanya seketika, tanpa dua foto yang terlihat
+    // bersamaan di halaman.
+    const petakBaru = gridRef.current?.querySelector<HTMLElement>(
+      `[data-flip-id="${tersaring[baru].src}"]`,
+    ) ?? null;
+    const petakLama = asalElRef.current;
+    if (petakLama && petakLama !== petakBaru) gsap.set(petakLama, { visibility: "visible" });
+    if (petakBaru && petakBaru !== petakLama) gsap.set(petakBaru, { visibility: "hidden" });
+    asalElRef.current = petakBaru;
     arahRef.current = arah;
-    setBuka((kini) => (kini === null ? kini : (kini + arah + jumlah) % jumlah));
+    setBuka(baru);
   };
 
+  // Pinjam petak: elemen bersama asli hilang dari kisi seketika (visibility,
+  // bukan fade) selama fotonya terbang di lightbox, lalu muncul lagi persis
+  // pada bingkai mendaratnya — itulah tanda elemen bersama sungguhan: hanya
+  // satu salinan yang terlihat dari buka sampai tutup, tanpa pandangan ganda.
   const bukaFoto = (index: number, elemenAsal: HTMLElement) => {
+    gsap.set(elemenAsal, { visibility: "hidden" });
     asalElRef.current = elemenAsal;
     setBuka(index);
   };
+
+  /** Kembalikan petak yang sedang dipinjam ke kisi, seketika (tanpa fade). */
+  const pulangkanAsal = useCallback(() => {
+    if (asalElRef.current) gsap.set(asalElRef.current, { visibility: "visible" });
+    asalElRef.current = null;
+  }, []);
 
   const selesaiTutup = () => {
     menutupTweenRef.current?.kill();
     menutupTweenRef.current = null;
     menutupRef.current = false;
-    asalElRef.current = null;
+    pulangkanAsal();
     setBuka(null);
   };
 
@@ -284,12 +310,18 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     const skalaTutup = (rectAsal.width / lebarAsli + rectAsal.height / tinggiAsli) / 2;
     if (ketRef.current) {
       gsap.to(ketRef.current, {
-        autoAlpha: 0,
-        y: 14,
+        y: 16,
         duration: 0.22,
         ease: "power2.in",
         overwrite: "auto",
       });
+    }
+    // Tombol tutup yang entrancenya masih tertunda dibatalkan dan disingkirkan
+    // seketika supaya tidak muncul sendirian di tengah penyusutan foto.
+    const tombolX = document.querySelector<HTMLElement>('[data-slot="dialog-close"]');
+    if (tombolX) {
+      gsap.killTweensOf(tombolX);
+      gsap.set(tombolX, { visibility: "hidden" });
     }
     menutupTweenRef.current = gsap.to(kotak, {
       x: rectAsal.left + rectAsal.width / 2 - tengahAsliX,
@@ -307,8 +339,9 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
     () => () => {
       menutupTweenRef.current?.kill();
       pegasRef.current.berhenti();
+      pulangkanAsal();
     },
-    [],
+    [pulangkanAsal],
   );
 
   // Papan tombol menggeser foto selama penampil terbuka.
@@ -420,30 +453,40 @@ export function GaleriTab({ content }: { content: Partial<SiteContent> }) {
       <KontakChapter contact={content.contact} identity={content.identity} />
 
       <Dialog open={buka !== null} onOpenChange={(open) => !open && mintaTutup()}>
-        {/* Kotak dialog sengaja tembus pandang dan tanpa animasi bawaan
-            (duration-0): foto di dalamnyalah yang bergerak FLIP dari thumbnail,
-            bukan seluruh panel memudar dari kosong. Latar gelapnya tinggal di
-            panel foto + keterangan, masing-masing rounded-xl. */}
-        <DialogContent
-          aria-describedby={undefined}
-          className="gap-0 rounded-xl border-0 bg-transparent p-0 text-white shadow-none duration-0 sm:max-w-5xl [&>button]:rounded-lg [&>button]:bg-abyss/70 [&>button]:p-2.5 [&>button]:text-white [&>button]:opacity-90 [&>button]:transition-[background-color,opacity,transform] [&>button]:hover:bg-abyss [&>button]:hover:opacity-100 [&>button]:active:translate-y-px"
-        >
-          {aktif ? (
-            <FotoLightbox
-              item={aktif}
-              nomor={(buka ?? 0) + 1}
-              jumlah={tersaring.length}
-              asalElRef={asalElRef}
-              arahRef={arahRef}
-              tanpaGerakRef={tanpaGerakRef}
-              menutupRef={menutupRef}
-              pegasRef={pegasRef}
-              kotakRef={kotakRef}
-              ketRef={ketRef}
-              onGeser={geser}
-            />
-          ) : null}
-        </DialogContent>
+        {/* Dialog disusun manual TANPA overlay: tidak ada latar yang memudar
+            (fade) — satu-satunya gerakan adalah fotonya sendiri yang bermorph
+            FLIP dari petaknya (elemen bersama). Latar gelap tinggal di panel
+            foto (bg-deep) + keterangan (bg-abyss), masing-masing rounded-xl,
+            dan petak asal "dipinjam" jadi kisi memperlihatkan lubangnya. */}
+        <DialogPortal>
+          <DialogPrimitive.Content
+            aria-describedby={undefined}
+            className="fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-0 rounded-xl border-0 bg-transparent p-0 text-white shadow-none sm:max-w-5xl"
+          >
+            {aktif ? (
+              <FotoLightbox
+                item={aktif}
+                nomor={(buka ?? 0) + 1}
+                jumlah={tersaring.length}
+                asalElRef={asalElRef}
+                arahRef={arahRef}
+                tanpaGerakRef={tanpaGerakRef}
+                menutupRef={menutupRef}
+                pegasRef={pegasRef}
+                kotakRef={kotakRef}
+                ketRef={ketRef}
+                onGeser={geser}
+              />
+            ) : null}
+            <DialogPrimitive.Close
+              data-slot="dialog-close"
+              className="absolute top-4 right-4 z-10 rounded-lg bg-abyss/70 p-2.5 text-white opacity-90 transition-[background-color,opacity,transform] hover:bg-abyss hover:opacity-100 active:translate-y-px"
+            >
+              <XIcon aria-hidden className="size-4" />
+              <span className="sr-only">Tutup galeri</span>
+            </DialogPrimitive.Close>
+          </DialogPrimitive.Content>
+        </DialogPortal>
       </Dialog>
     </>
   );
@@ -594,17 +637,32 @@ function FotoLightbox({
         });
         if (!morph) siapRef.current = true;
         // Keterangan dan tombol tutup menyusul menumpang saat foto 60% jalan
-        // (overlapping action), bukan menunggu foto selesai penuh.
+        // (overlapping action). Keduanya muncul seketika lalu meluncur masuk —
+        // tanpa fade: elemen bersama dan isinya selalu opak penuh.
+        gsap.set(ket, { visibility: "hidden" });
         gsap.fromTo(
           ket,
-          { autoAlpha: 0, y: 18 },
-          { autoAlpha: 1, y: 0, duration: 0.32, ease: "power3.out", delay: GERAK.panjang * 0.6 },
+          { y: 18, visibility: "visible" },
+          {
+            y: 0,
+            duration: 0.32,
+            ease: "power3.out",
+            delay: GERAK.panjang * 0.6,
+            immediateRender: false,
+          },
         );
         if (tombolX) {
+          gsap.set(tombolX, { visibility: "hidden" });
           gsap.fromTo(
             tombolX,
-            { autoAlpha: 0 },
-            { autoAlpha: 1, duration: 0.24, delay: GERAK.panjang * 0.6 + 0.05 },
+            { y: -8, visibility: "visible" },
+            {
+              y: 0,
+              duration: 0.24,
+              ease: "power2.out",
+              delay: GERAK.panjang * 0.6 + 0.05,
+              immediateRender: false,
+            },
           );
         }
         return;
@@ -629,13 +687,9 @@ function FotoLightbox({
       const arah = serah?.arah ?? arahRef.current;
       const lebar = kotak.offsetWidth || 480;
       // Gesekan: foto berikutnya datang dari jauh membawa kecepatan jari;
-      // tombol/papan ketik: saling geser singkat mengikuti arah.
+      // tombol/papan ketik: saling geser singkat mengikuti arah. Foto baru
+      // masuk opak penuh sambil meluncur — bukan memudar masuk.
       const jarak = serah ? Math.min(lebar * 0.7, 560) : 48;
-      gsap.fromTo(
-        kotak,
-        { autoAlpha: serah ? 0.25 : 0 },
-        { autoAlpha: 1, duration: 0.2, ease: "power1.out" },
-      );
       pegasRef.current.mulai(
         {
           x: {
@@ -648,10 +702,12 @@ function FotoLightbox({
         },
         serah ? { respons: 0.34, redaman: 0.88 } : { respons: 0.3, redaman: 1 },
       );
+      // Keterangan berganti isi: ia mengikuti arah pindah dengan luncuran
+      // singkat, tetap opak penuh (tanpa saling padam).
       gsap.fromTo(
         ket,
-        { autoAlpha: 0.35 },
-        { autoAlpha: 1, duration: 0.3, ease: "power2.out" },
+        { x: arah * 22 },
+        { x: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" },
       );
       return () => {
         pegasRef.current.berhenti();

@@ -113,15 +113,12 @@ export function flipBetween(
   const sy = opsi.skala === "bebas" ? skalaY : seragam;
 
   // Skala seragam dipusatkan pada titik tengah supaya morph terasa "angkat
-  // dan taruh", bukan regang dari sudut. Titik asal 0 0 hanya untuk bebas.
+  // dan taruh", bukan regang dari sudut. Skala bebas menambatkan titik asal di
+  // pojok 0 0 (bingkai panel yang membuka dari kartu), jadi geserannya pun
+  // harus dihitung dari tepi kiri atas, bukan pusat.
   const transformOrigin = opsi.skala === "bebas" ? "0 0" : "50% 50%";
-  // Untuk skala seragam, geser dihitung dari pusat kotak, bukan sudut kiri.
-  const pusatAsalX = a.left + a.width / 2;
-  const pusatAsalY = a.top + a.height / 2;
-  const pusatTujuanX = b.left + b.width / 2;
-  const pusatTujuanY = b.top + b.height / 2;
-  const dx = pusatAsalX - pusatTujuanX;
-  const dy = pusatAsalY - pusatTujuanY;
+  const dx = opsi.skala === "bebas" ? a.left - b.left : a.left + a.width / 2 - (b.left + b.width / 2);
+  const dy = opsi.skala === "bebas" ? a.top - b.top : a.top + a.height / 2 - (b.top + b.height / 2);
 
   return gsap.fromTo(
     tujuan,
@@ -181,12 +178,14 @@ export function useSharedNode<T extends HTMLElement>(id: string): HasilSharedNod
       if (catatan && segar && !tanpaGerak()) {
         const a = catatan.rect;
         const b = el.getBoundingClientRect();
+        // Pindah murni x/y: elemen yang sama tidak pernah berubah temaram di
+        // tengah jalan (elemen bersama asli selalu opak penuh sepanjang jalan).
         const dx = a.left + a.width / 2 - (b.left + b.width / 2);
         const dy = a.top + a.height / 2 - (b.top + b.height / 2);
         gsap.fromTo(
           el,
-          { x: dx, y: dy, autoAlpha: 0.6 },
-          { x: 0, y: 0, autoAlpha: 1, duration: GERAK.sedang, ease: GERAK.ease, overwrite: "auto" },
+          { x: dx, y: dy },
+          { x: 0, y: 0, duration: GERAK.sedang, ease: GERAK.ease, overwrite: "auto" },
         );
       }
     },
